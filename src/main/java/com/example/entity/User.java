@@ -39,7 +39,7 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Column(name = "two_factor_enabled")
-    private boolean twoFactorEnabled = false;
+    private Boolean twoFactorEnabled = false;
 
     @Column(name = "two_factor_secret")
     private String twoFactorSecret;
@@ -121,11 +121,11 @@ public class User {
     }
 
     public boolean isTwoFactorEnabled() {
-        return twoFactorEnabled;
+        return Boolean.TRUE.equals(twoFactorEnabled);
     }
 
-    public void setTwoFactorEnabled(boolean twoFactorEnabled) {
-        this.twoFactorEnabled = twoFactorEnabled;
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        this.twoFactorEnabled = (twoFactorEnabled == null) ? false : twoFactorEnabled;
     }
 
     public String getTwoFactorSecret() {

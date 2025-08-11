@@ -17,6 +17,7 @@ import {
   Paper,
   Divider,
   Tabs,
+  Pagination,
 } from "@mantine/core";
 import {
   IconUserPlus,
@@ -57,6 +58,9 @@ function App() {
     text: string;
     type: "success" | "danger";
   } | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const pageSize = 5;
   const [token, setToken] = useState<string | null>(
     typeof window !== "undefined" ? localStorage.getItem("token") : null
   );
@@ -110,11 +114,21 @@ function App() {
     setTimeout(() => setMessage(null), 5000);
   };
 
-  const loadUsers = async () => {
+  const loadUsers = async (page: number = currentPage) => {
     setLoading(true);
     try {
-      const response = await axios.get(USERS_URL);
-      setUsers(response.data);
+      const response = await axios.get(USERS_URL, {
+        params: { page: Math.max(page - 1, 0), size: pageSize },
+      });
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setUsers(data);
+        setTotalPages(1);
+      } else {
+        setUsers(data.content ?? []);
+        setTotalPages(Math.max(data.totalPages ?? 1, 1));
+      }
+      setCurrentPage(page);
     } catch (error: any) {
       showMessage(extractErrorMessage(error, "Error loading users"), "danger");
     } finally {
@@ -608,73 +622,86 @@ function App() {
                       <Text c="dimmed">Loading users...</Text>
                     </Stack>
                   ) : (
-                    <Table striped withRowBorders={false} highlightOnHover>
-                      <Table.Thead>
-                        <Table.Tr>
-                          <Table.Th>ID</Table.Th>
-                          <Table.Th>Name</Table.Th>
-                          <Table.Th>Email</Table.Th>
-                          <Table.Th>Phone</Table.Th>
-                          <Table.Th>Created</Table.Th>
-                          <Table.Th>Actions</Table.Th>
-                        </Table.Tr>
-                      </Table.Thead>
-                      <Table.Tbody>
-                        {users.length === 0 ? (
+                    <>
+                      <Table striped withRowBorders={false} highlightOnHover>
+                        <Table.Thead>
                           <Table.Tr>
-                            <Table.Td colSpan={6}>
-                              <Text c="dimmed" ta="center">
-                                No users found
-                              </Text>
-                            </Table.Td>
+                            <Table.Th>ID</Table.Th>
+                            <Table.Th>Name</Table.Th>
+                            <Table.Th>Email</Table.Th>
+                            <Table.Th>Phone</Table.Th>
+                            <Table.Th>Created</Table.Th>
+                            <Table.Th>Actions</Table.Th>
                           </Table.Tr>
-                        ) : (
-                          users.map((user) => (
-                            <Table.Tr key={user.id}>
-                              <Table.Td>
-                                <Badge color="indigo">{user.id}</Badge>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text fw={600}>{user.name}</Text>
-                              </Table.Td>
-                              <Table.Td>{user.email}</Table.Td>
-                              <Table.Td>
-                                {user.phone || <Text c="dimmed">-</Text>}
-                              </Table.Td>
-                              <Table.Td>
-                                <Text size="sm" c="dimmed">
-                                  {user.createdAt
-                                    ? new Date(user.createdAt).toLocaleString()
-                                    : "-"}
+                        </Table.Thead>
+                        <Table.Tbody>
+                          {users.length === 0 ? (
+                            <Table.Tr>
+                              <Table.Td colSpan={6}>
+                                <Text c="dimmed" ta="center">
+                                  No users found
                                 </Text>
                               </Table.Td>
-                              <Table.Td>
-                                <Group gap="xs">
-                                  <Button
-                                    size="xs"
-                                    color="yellow"
-                                    variant="light"
-                                    onClick={() => editUser(user.id!)}
-                                    leftSection={<IconEdit size={14} />}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    size="xs"
-                                    color="red"
-                                    variant="light"
-                                    onClick={() => deleteUser(user.id!)}
-                                    leftSection={<IconTrash size={14} />}
-                                  >
-                                    Delete
-                                  </Button>
-                                </Group>
-                              </Table.Td>
                             </Table.Tr>
-                          ))
-                        )}
-                      </Table.Tbody>
-                    </Table>
+                          ) : (
+                            users.map((user) => (
+                              <Table.Tr key={user.id}>
+                                <Table.Td>
+                                  <Badge color="indigo">{user.id}</Badge>
+                                </Table.Td>
+                                <Table.Td>
+                                  <Text fw={600}>{user.name}</Text>
+                                </Table.Td>
+                                <Table.Td>{user.email}</Table.Td>
+                                <Table.Td>
+                                  {user.phone || <Text c="dimmed">-</Text>}
+                                </Table.Td>
+                                <Table.Td>
+                                  <Text size="sm" c="dimmed">
+                                    {user.createdAt
+                                      ? new Date(
+                                          user.createdAt
+                                        ).toLocaleString()
+                                      : "-"}
+                                  </Text>
+                                </Table.Td>
+                                <Table.Td>
+                                  <Group gap="xs">
+                                    <Button
+                                      size="xs"
+                                      color="yellow"
+                                      variant="light"
+                                      onClick={() => editUser(user.id!)}
+                                      leftSection={<IconEdit size={14} />}
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      size="xs"
+                                      color="red"
+                                      variant="light"
+                                      onClick={() => deleteUser(user.id!)}
+                                      leftSection={<IconTrash size={14} />}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </Group>
+                                </Table.Td>
+                              </Table.Tr>
+                            ))
+                          )}
+                        </Table.Tbody>
+                      </Table>
+                      {totalPages > 1 && (
+                        <Group justify="center" mt="md">
+                          <Pagination
+                            total={totalPages}
+                            value={currentPage}
+                            onChange={(p) => loadUsers(p)}
+                          />
+                        </Group>
+                      )}
+                    </>
                   )}
                 </Card.Section>
               </Card>
