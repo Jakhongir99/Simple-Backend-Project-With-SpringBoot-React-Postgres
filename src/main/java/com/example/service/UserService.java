@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class UserService {
@@ -40,6 +41,25 @@ public class UserService {
             return userRepository.findByNameContainingIgnoreCase(nameFilter.trim(), pageable);
         }
         return userRepository.findAll(pageable);
+    }
+
+    public Page<User> searchUsers(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1));
+        String q = (query == null) ? "" : query.trim();
+        return userRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(q, q, pageable);
+    }
+
+    public Page<User> getUsersCreatedBetween(LocalDateTime from, LocalDateTime to, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1));
+        return userRepository.findByCreatedAtBetween(from, to, pageable);
+    }
+
+    public List<User> getUsersByTwoFactorEnabled(boolean enabled) {
+        return userRepository.findByTwoFactorEnabled(enabled);
+    }
+
+    public List<Object[]> getEmailDomainStats() {
+        return userRepository.countByEmailDomain();
     }
     
     public Optional<User> getUserById(Long id) {

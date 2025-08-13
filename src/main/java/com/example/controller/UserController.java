@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import org.springframework.data.domain.Page;
 import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @RestController
 @RequestMapping("/api/users")
@@ -33,6 +36,39 @@ public class UserController {
         Page<UserResponseDTO> users = userService.getUsersPage(name, page, size)
                 .map(userMapper::toResponse);
         return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<UserResponseDTO>> search(
+            @RequestParam("q") String q,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "5") int size) {
+        Page<UserResponseDTO> users = userService.searchUsers(q, page, size)
+                .map(userMapper::toResponse);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/created-between")
+    public ResponseEntity<Page<UserResponseDTO>> createdBetween(
+            @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "5") int size) {
+        Page<UserResponseDTO> users = userService.getUsersCreatedBetween(from, to, page, size)
+                .map(userMapper::toResponse);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/twofa")
+    public ResponseEntity<List<UserResponseDTO>> usersByTwoFA(@RequestParam("enabled") boolean enabled) {
+        List<UserResponseDTO> users = userService.getUsersByTwoFactorEnabled(enabled)
+                .stream().map(userMapper::toResponse).collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/email-domain-stats")
+    public ResponseEntity<List<?>> emailDomainStats() {
+        return ResponseEntity.ok(userService.getEmailDomainStats());
     }
     
     @GetMapping("/{id}")
