@@ -11,8 +11,18 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.util.stream.Collectors;
 
+ 
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiError> handleUserNotFound(UserNotFoundException ex, WebRequest request) {
+        String path = ((ServletWebRequest) request).getRequest().getRequestURI();
+        ApiError apiError = new ApiError(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(), path);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
 
     @ExceptionHandler(PasswordValidationException.class)
     public ResponseEntity<ApiError> handlePasswordValidation(PasswordValidationException ex, WebRequest request) {

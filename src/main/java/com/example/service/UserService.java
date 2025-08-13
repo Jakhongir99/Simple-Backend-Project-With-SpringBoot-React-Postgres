@@ -3,6 +3,7 @@ package com.example.service;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.exception.PasswordValidationException;
+import com.example.exception.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -60,7 +61,7 @@ public class UserService {
     
     public User updateUser(Long id, User userDetails) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         
         user.setName(userDetails.getName());
         user.setEmail(userDetails.getEmail());
@@ -73,7 +74,7 @@ public class UserService {
     
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         userRepository.delete(user);
     }
     

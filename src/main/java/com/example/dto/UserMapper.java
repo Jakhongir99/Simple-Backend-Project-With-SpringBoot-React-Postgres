@@ -1,34 +1,18 @@
 package com.example.dto;
 
 import com.example.entity.User;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-public class UserMapper {
-    public static User toEntity(UserRequestDTO dto) {
-        User user = new User();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword());
-        user.setPhone(dto.getPhone());
-        return user;
-    }
+@Mapper(componentModel = "spring")
+public interface UserMapper {
 
-    public static void updateEntity(User user, UserRequestDTO dto) {
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword());
-        user.setPhone(dto.getPhone());
-    }
+    User toEntity(UserRequestDTO dto);
 
-    public static UserResponseDTO toResponse(User user) {
-        UserResponseDTO res = new UserResponseDTO();
-        res.setId(user.getId());
-        res.setName(user.getName());
-        res.setEmail(user.getEmail());
-        res.setPhone(user.getPhone());
-        res.setCreatedAt(user.getCreatedAt());
-        res.setUpdatedAt(user.getUpdatedAt());
-        return res;
-    }
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntity(@MappingTarget User user, UserRequestDTO dto);
+
+    UserResponseDTO toResponse(User user);
 }
-
-

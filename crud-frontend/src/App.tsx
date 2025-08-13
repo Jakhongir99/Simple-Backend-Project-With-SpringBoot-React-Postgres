@@ -88,6 +88,21 @@ function App() {
     }
   }, [token]);
 
+  // Global 401 interceptor: logout and show login when token expires/unauthorized
+  useEffect(() => {
+    const id = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error?.response?.status === 401) {
+          setToken(null);
+          showMessage("Session expired. Please login again.", "danger");
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(id);
+  }, []);
+
   const extractErrorMessage = (error: any, defaultPrefix?: string) => {
     const data = error?.response?.data;
     if (!data)

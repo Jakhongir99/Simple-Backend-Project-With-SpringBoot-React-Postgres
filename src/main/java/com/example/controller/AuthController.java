@@ -21,7 +21,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TwoFactorService twoFactorService;
-    private final JwtUtil jwtUtil = new JwtUtil("change-this-secret", 1000L * 60 * 60 * 24);
+    private final JwtUtil jwtUtil = new JwtUtil("change-this-secret", 1000L * 60 * 60);
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, TwoFactorService twoFactorService) {
         this.userRepository = userRepository;

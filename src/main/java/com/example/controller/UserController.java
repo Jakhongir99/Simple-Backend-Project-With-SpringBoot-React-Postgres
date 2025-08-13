@@ -21,6 +21,9 @@ public class UserController {
     
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserMapper userMapper;
     
     @GetMapping
     public ResponseEntity<Page<UserResponseDTO>> getAllUsers(
@@ -28,44 +31,40 @@ public class UserController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "5") int size) {
         Page<UserResponseDTO> users = userService.getUsersPage(name, page, size)
-                .map(UserMapper::toResponse);
+                .map(userMapper::toResponse);
         return ResponseEntity.ok(users);
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
         Optional<User> user = userService.getUserById(id);
-        return user.map(u -> ResponseEntity.ok(UserMapper.toResponse(u)))
-                .orElse(ResponseEntity.notFound().build());
+        return user.map(u -> ResponseEntity.ok(userMapper.toResponse(u)))
+                .orElseThrow(() -> new com.example.exception.UserNotFoundException("User not found with id: " + id));
     }
     
     @GetMapping("/email/{email}")
     public ResponseEntity<UserResponseDTO> getUserByEmail(@PathVariable String email) {
         Optional<User> user = userService.getUserByEmail(email);
-        return user.map(u -> ResponseEntity.ok(UserMapper.toResponse(u)))
+        return user.map(u -> ResponseEntity.ok(userMapper.toResponse(u)))
                 .orElse(ResponseEntity.notFound().build());
     }
     
     @PostMapping
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequestDTO request) {
-        User createdUser = userService.createUser(UserMapper.toEntity(request));
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserMapper.toResponse(createdUser));
+        User createdUser = userService.createUser(userMapper.toEntity(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userMapper.toResponse(createdUser));
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequestDTO userDetails) {
-        User updatedUser = userService.updateUser(id, UserMapper.toEntity(userDetails));
-        return ResponseEntity.ok(UserMapper.toResponse(updatedUser));
+        User updatedUser = userService.updateUser(id, userMapper.toEntity(userDetails));
+        return ResponseEntity.ok(userMapper.toResponse(updatedUser));
     }
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
     
     @GetMapping("/health")
