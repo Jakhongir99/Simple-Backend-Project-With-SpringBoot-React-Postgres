@@ -38,11 +38,7 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "two_factor_enabled")
-    private Boolean twoFactorEnabled = false;
-
-    @Column(name = "two_factor_secret")
-    private String twoFactorSecret;
+    
     
     @PrePersist
     protected void onCreate() {
@@ -120,21 +116,7 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
-    public boolean isTwoFactorEnabled() {
-        return Boolean.TRUE.equals(twoFactorEnabled);
-    }
-
-    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
-        this.twoFactorEnabled = (twoFactorEnabled == null) ? false : twoFactorEnabled;
-    }
-
-    public String getTwoFactorSecret() {
-        return twoFactorSecret;
-    }
-
-    public void setTwoFactorSecret(String twoFactorSecret) {
-        this.twoFactorSecret = twoFactorSecret;
-    }
+    
     
     @Override
     public String toString() {

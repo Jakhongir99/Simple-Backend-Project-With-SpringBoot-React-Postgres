@@ -54,10 +54,6 @@ public class UserService {
         return userRepository.findByCreatedAtBetween(from, to, pageable);
     }
 
-    public List<User> getUsersByTwoFactorEnabled(boolean enabled) {
-        return userRepository.findByTwoFactorEnabled(enabled);
-    }
-
     public List<Object[]> getEmailDomainStats() {
         return userRepository.countByEmailDomain();
     }

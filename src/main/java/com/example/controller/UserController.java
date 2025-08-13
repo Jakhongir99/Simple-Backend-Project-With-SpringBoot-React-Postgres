@@ -59,13 +59,6 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @GetMapping("/twofa")
-    public ResponseEntity<List<UserResponseDTO>> usersByTwoFA(@RequestParam("enabled") boolean enabled) {
-        List<UserResponseDTO> users = userService.getUsersByTwoFactorEnabled(enabled)
-                .stream().map(userMapper::toResponse).collect(java.util.stream.Collectors.toList());
-        return ResponseEntity.ok(users);
-    }
-
     @GetMapping("/email-domain-stats")
     public ResponseEntity<List<?>> emailDomainStats() {
         return ResponseEntity.ok(userService.getEmailDomainStats());

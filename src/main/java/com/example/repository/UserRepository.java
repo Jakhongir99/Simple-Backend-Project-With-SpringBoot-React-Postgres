@@ -24,8 +24,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to, Pageable pageable);
 
-    List<User> findByTwoFactorEnabled(Boolean twoFactorEnabled);
-
     @Query("SELECT LOWER(SUBSTRING(u.email, LOCATE('@', u.email)+1)) AS domain, COUNT(u) AS cnt " +
            "FROM User u " +
            "WHERE LOCATE('@', u.email) > 0 " +

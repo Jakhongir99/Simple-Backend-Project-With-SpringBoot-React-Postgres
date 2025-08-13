@@ -27,7 +27,6 @@ import {
   IconEdit,
   IconTrash,
 } from "@tabler/icons-react";
-import QRCode from "react-qr-code";
 import "./App.css";
 
 interface User {
@@ -64,12 +63,6 @@ function App() {
   const [token, setToken] = useState<string | null>(
     typeof window !== "undefined" ? localStorage.getItem("token") : null
   );
-  const [currentEmail, setCurrentEmail] = useState<string | null>(null);
-  const [twoFA, setTwoFA] = useState<{
-    enabled: boolean;
-    otpauth?: string;
-    secret?: string;
-  } | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -256,18 +249,18 @@ function App() {
   const handleAuthSuccess = (jwt: string) => {
     setToken(jwt);
     showMessage("Authenticated successfully", "success");
-    try {
-      const payload = JSON.parse(atob(jwt.split(".")[1] || "") || "{}");
-      if (payload?.sub) setCurrentEmail(payload.sub as string);
-    } catch {}
   };
 
   const logout = () => {
-    setToken(null);
-    setUsers([]);
-    setIsEditing(false);
-    clearForm();
-    showMessage("Logged out", "success");
+    try {
+      axios.post(`${AUTH_URL}/logout`).catch(() => {});
+    } finally {
+      setToken(null);
+      setUsers([]);
+      setIsEditing(false);
+      clearForm();
+      showMessage("Logged out", "success");
+    }
   };
 
   const AuthView: React.FC<{
@@ -276,7 +269,7 @@ function App() {
   }> = ({ onSuccess, onError }) => {
     const [loginEmail, setLoginEmail] = useState("");
     const [loginPassword, setLoginPassword] = useState("");
-    const [loginCode, setLoginCode] = useState("");
+    const [loginMessage, setLoginMessage] = useState("");
     const [regName, setRegName] = useState("");
     const [regEmail, setRegEmail] = useState("");
     const [regPassword, setRegPassword] = useState("");
@@ -285,9 +278,11 @@ function App() {
     const doLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        const body: any = { email: loginEmail, password: loginPassword };
-        if (loginCode.trim()) body.code = loginCode.trim();
-        const res = await axios.post(`${AUTH_URL}/login`, body);
+        const res = await axios.post(`${AUTH_URL}/login`, {
+          email: loginEmail,
+          password: loginPassword,
+          message: loginMessage,
+        });
         onSuccess(res.data.token);
       } catch (error: any) {
         onError(extractErrorMessage(error, "Login failed"));
@@ -338,11 +333,12 @@ function App() {
                     required
                   />
                   <TextInput
-                    label="2FA code (if enabled)"
-                    placeholder="123456"
-                    value={loginCode}
-                    onChange={(e) => setLoginCode(e.target.value)}
+                    label="Message to email (optional)"
+                    placeholder="Type a message to receive by email after login"
+                    value={loginMessage}
+                    onChange={(e) => setLoginMessage(e.target.value)}
                   />
+
                   <Button type="submit">Login</Button>
                 </Stack>
               </form>
@@ -523,83 +519,6 @@ function App() {
                   </form>
                 </Card.Section>
               </Card>
-              <Card radius="md" shadow="sm" withBorder mt="md">
-                <Card.Section inheritPadding py="sm">
-                  <Group justify="space-between">
-                    <Text fw={600}>Two-Factor Authentication</Text>
-                  </Group>
-                </Card.Section>
-                <Divider my="xs" />
-                <Card.Section inheritPadding py="md">
-                  <Stack gap="sm">
-                    {!twoFA?.enabled ? (
-                      <>
-                        <Text c="dimmed" size="sm">
-                          Enable 2FA to secure your account. Use Google
-                          Authenticator or Authy.
-                        </Text>
-                        <Button
-                          onClick={async () => {
-                            try {
-                              if (!currentEmail) return;
-                              const res = await axios.post(
-                                `${AUTH_URL}/2fa/enable`,
-                                { email: currentEmail }
-                              );
-                              setTwoFA({
-                                enabled: true,
-                                otpauth: res.data.otpauth,
-                                secret: res.data.secret,
-                              });
-                              showMessage(
-                                "2FA enabled. Scan the QR code.",
-                                "success"
-                              );
-                            } catch (e: any) {
-                              showMessage(
-                                extractErrorMessage(e, "Failed to enable 2FA"),
-                                "danger"
-                              );
-                            }
-                          }}
-                        >
-                          Enable 2FA
-                        </Button>
-                        {twoFA?.otpauth && (
-                          <Stack align="center" gap={6}>
-                            <QRCode value={twoFA.otpauth} size={160} />
-                            <Text size="xs" c="dimmed">
-                              Secret: {twoFA.secret}
-                            </Text>
-                          </Stack>
-                        )}
-                      </>
-                    ) : (
-                      <Button
-                        color="red"
-                        variant="light"
-                        onClick={async () => {
-                          try {
-                            if (!currentEmail) return;
-                            await axios.post(`${AUTH_URL}/2fa/disable`, {
-                              email: currentEmail,
-                            });
-                            setTwoFA({ enabled: false });
-                            showMessage("2FA disabled", "success");
-                          } catch (e: any) {
-                            showMessage(
-                              extractErrorMessage(e, "Failed to disable 2FA"),
-                              "danger"
-                            );
-                          }
-                        }}
-                      >
-                        Disable 2FA
-                      </Button>
-                    )}
-                  </Stack>
-                </Card.Section>
-              </Card>
             </Grid.Col>
 
             <Grid.Col span={{ base: 12, lg: 8 }}>
@@ -613,7 +532,7 @@ function App() {
                     <Group gap="xs">
                       <Button
                         variant="light"
-                        onClick={loadUsers}
+                        onClick={() => loadUsers()}
                         leftSection={<IconRefresh size={16} />}
                       >
                         Refresh

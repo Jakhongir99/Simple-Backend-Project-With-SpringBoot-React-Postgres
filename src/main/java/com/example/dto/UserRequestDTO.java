@@ -3,11 +3,13 @@ package com.example.dto;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import javax.validation.constraints.NotNull;
 
 public class UserRequestDTO {
 
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
+    @NotNull(message = "Name is required")
     private String name;
 
     @NotBlank(message = "Email is required")
@@ -17,6 +19,7 @@ public class UserRequestDTO {
     @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
     private String password;
 
+    
     private String phone;
 
     public String getName() {
