@@ -7,6 +7,7 @@ import com.example.entity.User;
 import com.example.entity.UserRole;
 import com.example.service.UserService;
 import com.example.annotation.RequireRole;
+import com.example.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,28 @@ public class UserController {
 
     @Autowired
     private UserMapper userMapper;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
+    
+    @GetMapping("/me")
+    @ApiOperation(value = "Get current user info", notes = "Retrieve the current authenticated user's information")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        try {
+            String token = authHeader.substring(7);
+            String email = jwtUtil.extractUsername(token);
+            Optional<User> user = userService.getUserByEmail(email);
+            
+            return user.map(u -> ResponseEntity.ok(userMapper.toResponse(u)))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
     
     @GetMapping
     @ApiOperation(value = "Get all users", notes = "Retrieve paginated list of users with optional name filtering")

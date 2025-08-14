@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/login", "/api/auth/register").permitAll()
                 .antMatchers("/api/auth/logout").permitAll()
                 .antMatchers("/api/users/health").permitAll()
+                .antMatchers("/api/users/me").authenticated()
                 .antMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Swagger UI endpoints
