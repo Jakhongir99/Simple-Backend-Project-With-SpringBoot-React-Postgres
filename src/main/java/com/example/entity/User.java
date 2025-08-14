@@ -32,6 +32,10 @@ public class User {
     @Column(name = "phone")
     private String phone;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private UserRole role = UserRole.USER;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -58,6 +62,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.phone = phone;
+        this.role = UserRole.USER; // Default role for new users
     }
     
     public Long getId() {
@@ -100,6 +105,14 @@ public class User {
         this.phone = phone;
     }
     
+    public UserRole getRole() {
+        return role;
+    }
+    
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+    
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -125,6 +138,7 @@ public class User {
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
+                ", role=" + role +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

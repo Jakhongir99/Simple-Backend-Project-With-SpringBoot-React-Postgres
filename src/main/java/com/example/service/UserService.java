@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.entity.User;
+import com.example.entity.UserRole;
 import com.example.repository.UserRepository;
 import com.example.exception.PasswordValidationException;
 import com.example.exception.UserNotFoundException;
@@ -130,5 +131,17 @@ public class UserService {
 
     public long getUserCount() {
         return userRepository.count();
+    }
+    
+    public User promoteToAdmin(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        
+        if (user.getRole() == UserRole.ADMIN) {
+            throw new RuntimeException("User is already an admin");
+        }
+        
+        user.setRole(UserRole.ADMIN);
+        return userRepository.save(user);
     }
 } 

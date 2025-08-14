@@ -50,6 +50,29 @@ public class GlobalExceptionHandler {
         ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(), path);
         return ResponseEntity.badRequest().body(apiError);
     }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex, WebRequest request) {
+        String path = ((ServletWebRequest) request).getRequest().getRequestURI();
+        String message = ex.getMessage();
+        HttpStatus status;
+        
+        if ("User not found".equals(message)) {
+            status = HttpStatus.UNPROCESSABLE_ENTITY; // 422
+        } else {
+            status = HttpStatus.UNAUTHORIZED; // 401
+        }
+        
+        ApiError apiError = new ApiError(status.value(), status.getReasonPhrase(), message, path);
+        return ResponseEntity.status(status).body(apiError);
+    }
+
+    @ExceptionHandler(InsufficientPrivilegesException.class)
+    public ResponseEntity<ApiError> handleInsufficientPrivileges(InsufficientPrivilegesException ex, WebRequest request) {
+        String path = ((ServletWebRequest) request).getRequest().getRequestURI();
+        ApiError apiError = new ApiError(HttpStatus.FORBIDDEN.value(), "Forbidden", ex.getMessage(), path);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
+    }
 }
 
 

@@ -1,6 +1,7 @@
 package com.example.repository;
 
 import com.example.entity.User;
+import com.example.entity.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -29,4 +30,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "WHERE LOCATE('@', u.email) > 0 " +
            "GROUP BY LOWER(SUBSTRING(u.email, LOCATE('@', u.email)+1))")
     List<Object[]> countByEmailDomain();
+    
+    Optional<User> findByRole(UserRole role);
 } 

@@ -35,6 +35,10 @@ public class SecurityConfig {
                 .antMatchers("/api/users/health").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Swagger UI endpoints
+                .antMatchers("/swagger-ui/**", "/swagger-ui.html", "/v2/api-docs", "/swagger-resources/**", "/webjars/**", "/v3/api-docs/**").permitAll()
+                // Static resources and error pages
+                .antMatchers("/", "/error", "/favicon.ico").permitAll()
                 .anyRequest().authenticated()
             .and()
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
