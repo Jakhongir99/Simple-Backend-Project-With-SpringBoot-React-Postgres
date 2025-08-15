@@ -175,15 +175,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getCurrentUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        
-        if (principal instanceof UserDetails) {
-            String email = ((UserDetails) principal).getUsername();
-            return userRepository.findByEmail(email)
-                    .orElseThrow(() -> new UserNotFoundException("Current user not found"));
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            log.info("Current principal type: {}", principal.getClass().getSimpleName());
+            log.info("Current principal: {}", principal);
+            
+            if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+                log.info("Extracted email from UserDetails: {}", email);
+                return userRepository.findByEmail(email)
+                        .orElseThrow(() -> new UserNotFoundException("Current user not found with email: " + email));
+            } else if (principal instanceof String) {
+                String email = (String) principal;
+                log.info("Extracted email from String principal: {}", email);
+                return userRepository.findByEmail(email)
+                        .orElseThrow(() -> new UserNotFoundException("Current user not found with email: " + email));
+            }
+            
+            log.error("Unexpected principal type: {}", principal.getClass().getName());
+            throw new UserNotFoundException("Current user not found - unexpected principal type");
+        } catch (Exception e) {
+            log.error("Error getting current user: {}", e.getMessage(), e);
+            throw new UserNotFoundException("Error getting current user: " + e.getMessage());
         }
-        
-        throw new UserNotFoundException("Current user not found");
     }
 
     private UserDto mapToDto(User user) {

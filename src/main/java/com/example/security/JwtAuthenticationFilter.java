@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,8 +17,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
 import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
 
 @Slf4j
 @Component
@@ -26,6 +24,7 @@ import java.util.ArrayList;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
@@ -45,16 +44,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.info("Username extracted from token: {}", username);
                 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // Create basic authentication with USER role
-                    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                    // Load user details from database
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     
+                    // Create authentication token with user details
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                            username, null, authorities);
+                            userDetails, null, userDetails.getAuthorities());
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                     
-                    log.info("✅ Authentication SUCCESSFULLY set for user: {} with authorities: {}", username, authorities);
+                    log.info("✅ Authentication SUCCESSFULLY set for user: {} with authorities: {}", 
+                             username, userDetails.getAuthorities());
                     log.info("Security context authentication: {}", SecurityContextHolder.getContext().getAuthentication());
                 } else {
                     log.info("❌ Authentication NOT set - username: {}, existing auth: {}", 
