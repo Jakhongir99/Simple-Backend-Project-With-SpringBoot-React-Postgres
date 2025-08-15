@@ -1,6 +1,6 @@
 package com.example.annotation;
 
-import com.example.entity.UserRole;
+import com.example.user.enums.UserRole;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

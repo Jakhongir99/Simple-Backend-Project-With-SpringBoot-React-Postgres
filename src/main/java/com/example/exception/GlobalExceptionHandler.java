@@ -1,5 +1,9 @@
 package com.example.exception;
 
+import com.example.user.exception.UserNotFoundException;
+import com.example.user.exception.PasswordValidationException;
+import com.example.auth.exception.InvalidCredentialsException;
+import com.example.exception.InsufficientPrivilegesException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;

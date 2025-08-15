@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Add role column if it doesn't exist -->
+    <changeSet id="002-add-role-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <not>
+                    <columnExists tableName="users" columnName="role"/>
+                </not>
+            </and>
+        </preConditions>
+        
+        <addColumn tableName="users">
+            <column name="role" type="varchar(20)" defaultValue="USER">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Create index for role if it doesn't exist -->
+    <changeSet id="002-create-role-index" author="system">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <columnExists tableName="users" columnName="role"/>
+                <not>
+                    <indexExists indexName="idx_users_role"/>
+                </not>
+            </and>
+        </preConditions>
+        <createIndex tableName="users" indexName="idx_users_role">
+            <column name="role"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Update existing users to have USER role -->
+    <changeSet id="002-update-existing-users" author="system">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <columnExists tableName="users" columnName="role"/>
+            </and>
+        </preConditions>
+        <update tableName="users">
+            <column name="role" value="USER"/>
+            <where>role IS NULL</where>
+        </update>
+    </changeSet>
+
+    <!-- Set Jane Smith as ADMIN -->
+    <changeSet id="002-set-jane-as-admin" author="system">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <columnExists tableName="users" columnName="role"/>
+            </and>
+        </preConditions>
+        <update tableName="users">
+            <column name="role" value="ADMIN"/>
+            <where>email = 'jane@example.com'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

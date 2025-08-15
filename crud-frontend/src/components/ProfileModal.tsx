@@ -18,7 +18,6 @@ interface UserProfile {
   bio: string;
   role: string;
   notifications: boolean;
-  theme: string;
 }
 
 interface ProfileModalProps {
@@ -27,6 +26,7 @@ interface ProfileModalProps {
   userProfile: UserProfile;
   setUserProfile: (profile: UserProfile) => void;
   onSave: () => void;
+  onRefresh?: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
@@ -35,6 +35,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   userProfile,
   setUserProfile,
   onSave,
+  onRefresh,
 }) => {
   return (
     <Modal
@@ -99,7 +100,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             })
           }
         />
-        <Group justify="flex-end">
+
+        <Group justify="flex-end" gap="md">
           <Button variant="light" onClick={onClose}>
             Cancel
           </Button>

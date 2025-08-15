@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Create jobs table if it doesn't exist -->
+    <changeSet id="004-create-jobs-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="jobs"/>
+            </not>
+        </preConditions>
+        
+        <createTable tableName="jobs">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="varchar(1000)"/>
+            <column name="min_salary" type="decimal(10,2)"/>
+            <column name="max_salary" type="decimal(10,2)"/>
+            <column name="requirements" type="varchar(500)"/>
+            <column name="benefits" type="varchar(500)"/>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create indexes -->
+        <createIndex tableName="jobs" indexName="idx_jobs_title">
+            <column name="title"/>
+        </createIndex>
+        
+        <createIndex tableName="jobs" indexName="idx_jobs_salary_range">
+            <column name="min_salary"/>
+            <column name="max_salary"/>
+        </createIndex>
+
+        <!-- Insert sample jobs -->
+        <insert tableName="jobs">
+            <column name="title" value="Software Developer"/>
+            <column name="description" value="Develop and maintain software applications"/>
+            <column name="min_salary" value="60000.00"/>
+            <column name="max_salary" value="120000.00"/>
+            <column name="requirements" value="Bachelor's degree in Computer Science, 2+ years experience"/>
+            <column name="benefits" value="Health insurance, 401k, flexible hours"/>
+        </insert>
+
+        <insert tableName="jobs">
+            <column name="title" value="HR Manager"/>
+            <column name="description" value="Manage human resources operations and policies"/>
+            <column name="min_salary" value="70000.00"/>
+            <column name="max_salary" value="110000.00"/>
+            <column name="requirements" value="Bachelor's degree in HR, 5+ years experience"/>
+            <column name="benefits" value="Health insurance, 401k, paid time off"/>
+        </insert>
+
+        <insert tableName="jobs">
+            <column name="title" value="Financial Analyst"/>
+            <column name="description" value="Analyze financial data and prepare reports"/>
+            <column name="min_salary" value="55000.00"/>
+            <column name="max_salary" value="95000.00"/>
+            <column name="requirements" value="Bachelor's degree in Finance, 3+ years experience"/>
+            <column name="benefits" value="Health insurance, 401k, professional development"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

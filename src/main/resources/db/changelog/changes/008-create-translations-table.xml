@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="008-create-translations-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="translations"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="translations">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="translation_key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language_code" type="VARCHAR(5)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="translation_value" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <comment>Created translations table for storing translation data</comment>
+    </changeSet>
+
+    <changeSet id="008-create-translations-indexes" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="translations"/>
+        </preConditions>
+
+        <createIndex tableName="translations" indexName="idx_translations_key_lang">
+            <column name="translation_key"/>
+            <column name="language_code"/>
+        </createIndex>
+
+        <createIndex tableName="translations" indexName="idx_translations_language">
+            <column name="language_code"/>
+        </createIndex>
+
+        <createIndex tableName="translations" indexName="idx_translations_active">
+            <column name="is_active"/>
+        </createIndex>
+
+        <comment>Created indexes for translations table</comment>
+    </changeSet>
+
+    <changeSet id="008-add-translations-unique-constraint" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="translations"/>
+        </preConditions>
+
+        <addUniqueConstraint 
+            tableName="translations" 
+            columnNames="translation_key, language_code" 
+            constraintName="uk_translations_key_language"/>
+        
+        <comment>Added unique constraint for translation key and language code combination</comment>
+    </changeSet>
+
+    <changeSet id="008-insert-default-translations" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="translations"/>
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM translations</sqlCheck>
+        </preConditions>
+
+        <!-- English translations -->
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.dashboard"/>
+            <column name="language_code" value="en"/>
+            <column name="translation_value" value="Dashboard"/>
+            <column name="description" value="Navigation dashboard item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.users"/>
+            <column name="language_code" value="en"/>
+            <column name="translation_value" value="User Management"/>
+            <column name="description" value="Navigation users item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.departments"/>
+            <column name="language_code" value="en"/>
+            <column name="translation_value" value="Departments"/>
+            <column name="description" value="Navigation departments item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.jobs"/>
+            <column name="language_code" value="en"/>
+            <column name="translation_value" value="Jobs"/>
+            <column name="description" value="Navigation jobs item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.employees"/>
+            <column name="language_code" value="en"/>
+            <column name="translation_value" value="Employees"/>
+            <column name="description" value="Navigation employees item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.languages"/>
+            <column name="language_code" value="en"/>
+            <column name="translation_value" value="Languages"/>
+            <column name="description" value="Navigation languages item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Russian translations -->
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.dashboard"/>
+            <column name="language_code" value="ru"/>
+            <column name="translation_value" value="Панель управления"/>
+            <column name="description" value="Navigation dashboard item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.users"/>
+            <column name="language_code" value="ru"/>
+            <column name="translation_value" value="Управление пользователями"/>
+            <column name="description" value="Navigation users item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.departments"/>
+            <column name="language_code" value="ru"/>
+            <column name="translation_value" value="Отделы"/>
+            <column name="description" value="Navigation departments item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.jobs"/>
+            <column name="language_code" value="ru"/>
+            <column name="translation_value" value="Должности"/>
+            <column name="description" value="Navigation jobs item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.employees"/>
+            <column name="language_code" value="ru"/>
+            <column name="translation_value" value="Сотрудники"/>
+            <column name="description" value="Navigation employees item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.languages"/>
+            <column name="language_code" value="ru"/>
+            <column name="translation_value" value="Языки"/>
+            <column name="description" value="Navigation languages item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Uzbek translations -->
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.dashboard"/>
+            <column name="language_code" value="uz"/>
+            <column name="translation_value" value="Boshqaruv paneli"/>
+            <column name="description" value="Navigation dashboard item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.users"/>
+            <column name="language_code" value="uz"/>
+            <column name="translation_value" value="Foydalanuvchilarni boshqarish"/>
+            <column name="description" value="Navigation users item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.departments"/>
+            <column name="language_code" value="uz"/>
+            <column name="translation_value" value="Bo'limlar"/>
+            <column name="description" value="Navigation departments item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.jobs"/>
+            <column name="language_code" value="uz"/>
+            <column name="translation_value" value="Lavozimlar"/>
+            <column name="description" value="Navigation jobs item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.employees"/>
+            <column name="language_code" value="uz"/>
+            <column name="translation_value" value="Xodimlar"/>
+            <column name="description" value="Navigation employees item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <insert tableName="translations">
+            <column name="translation_key" value="nav.languages"/>
+            <column name="language_code" value="uz"/>
+            <column name="translation_value" value="Tillar"/>
+            <column name="description" value="Navigation languages item"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <comment>Inserted default translations for English, Russian, and Uzbek</comment>
+    </changeSet>
+
+</databaseChangeLog>

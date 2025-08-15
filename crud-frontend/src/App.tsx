@@ -1,12 +1,27 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Container, Box, Paper, Title, Text, Stack } from "@mantine/core";
+import { Box, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import { Layout } from "./components/Layout";
 import { AuthView } from "./components/AuthView";
 import { ProfileModal } from "./components/ProfileModal";
 import { UserManagement } from "./components/UserManagement";
+import { Dashboard } from "./components/Dashboard";
+import DepartmentManagement from "./components/DepartmentManagement";
+import JobManagement from "./components/JobManagement";
+import EmployeeManagement from "./components/EmployeeManagement";
+
+import TranslationManagement from "./components/TranslationManagement";
+import {
+  useCurrentUser,
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  useLogout,
+} from "./hooks";
+import { checkAuthStatus } from "./utils/auth";
+import { useTheme } from "./contexts/ThemeContext";
 
 interface User {
   id?: number;
@@ -14,11 +29,12 @@ interface User {
   email: string;
   password: string;
   phone?: string;
+  role?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 function App() {
-  const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User>({
     name: "",
     email: "",
@@ -26,9 +42,8 @@ function App() {
     phone: "",
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
+  const [currentView, setCurrentView] = useState<string>("dashboard");
   const pageSize = 5;
   const [token, setToken] = useState<string | null>(
     typeof window !== "undefined" ? localStorage.getItem("token") : null
@@ -44,145 +59,178 @@ function App() {
     bio: "",
     role: "User",
     notifications: true,
-    theme: "light",
   });
 
-  useEffect(() => {
-    if (token) {
-      loadUsers(1);
-    }
-  }, [token]);
+  // Theme context
+  const { theme } = useTheme();
 
-  const showMessage = (
-    message: string,
-    type: "success" | "error" | "warning" | "info" = "info"
-  ) => {
-    notifications.show({
-      title: type.charAt(0).toUpperCase() + type.slice(1),
-      message,
-      color:
-        type === "success"
-          ? "green"
-          : type === "error"
-          ? "red"
-          : type === "warning"
-          ? "yellow"
-          : "blue",
-    });
-  };
+  // React Query hooks
+  const { data: currentUserData } = useCurrentUser(token);
+  const { data: usersData, isLoading: usersLoading } = useUsers(
+    currentPage - 1,
+    pageSize,
+    !!token // Enable as soon as we have a token
+  );
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+  const deleteUserMutation = useDeleteUser();
+  const logoutMutation = useLogout();
+
+  useEffect(() => {
+    if (
+      token &&
+      currentUserData &&
+      typeof currentUserData === "object" &&
+      currentUserData !== null
+    ) {
+      const userData = currentUserData as any;
+      // Update user profile when current user data changes
+      setUserProfile({
+        name: userData.name || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        bio: "",
+        role: userData.role || "User",
+        notifications: true,
+      });
+    }
+  }, [token, currentUserData]);
+
+  // Debug: Log users data
+  useEffect(() => {
+    console.log("Users data:", usersData);
+    console.log("Users loading:", usersLoading);
+    console.log("Token:", token);
+    console.log("Current user data:", currentUserData);
+  }, [usersData, usersLoading, token, currentUserData]);
+
+  // Listen for authentication events
+  useEffect(() => {
+    const handleAuthUnauthorized = (_event: CustomEvent) => {
+      // Clear token and redirect to auth
+      setToken(null);
+      localStorage.removeItem("token");
+      setCurrentUser({ name: "", email: "", password: "", phone: "" });
+      setUserProfile({
+        name: "",
+        email: "",
+        phone: "",
+        bio: "",
+        role: "User",
+        notifications: true,
+      });
+
+      // Show notification
+      notifications.show({
+        title: "Session Expired",
+        message: "Please login again",
+        color: "yellow",
+      });
+    };
+
+    window.addEventListener(
+      "auth:unauthorized",
+      handleAuthUnauthorized as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        "auth:unauthorized",
+        handleAuthUnauthorized as EventListener
+      );
+    };
+  }, []);
+
+  // Periodic token validation check
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      if (!checkAuthStatus()) {
+        // Token is expired, trigger unauthorized event
+        window.dispatchEvent(
+          new CustomEvent("auth:unauthorized", {
+            detail: { message: "Token expired. Please login again." },
+          })
+        );
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [token]);
 
   const handleAuthSuccess = (newToken: string) => {
     setToken(newToken);
     localStorage.setItem("token", newToken);
-    showMessage("Authentication successful!", "success");
   };
 
   const logout = () => {
+    logoutMutation.mutate();
     setToken(null);
     localStorage.removeItem("token");
-    setUsers([]);
     setCurrentUser({ name: "", email: "", password: "", phone: "" });
     setIsEditing(false);
-    showMessage("Logged out successfully", "success");
   };
 
-  const loadUsers = async (page: number) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/api/users?page=${page - 1}&size=${pageSize}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setUsers(response.data.content || []);
-      setTotalPages(response.data.totalPages || 1);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error("Error loading users:", error);
-      showMessage("Failed to load users", "error");
-    } finally {
-      setLoading(false);
-    }
+  const handleNavigate = (view: string) => {
+    setCurrentView(view);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser.name || !currentUser.email || !currentUser.password) {
-      showMessage("Please fill in all required fields", "error");
       return;
     }
 
-    try {
-      if (isEditing && currentUser.id) {
-        await axios.put(
-          `http://localhost:8080/api/users/${currentUser.id}`,
-          currentUser,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        showMessage("User updated successfully!", "success");
-      } else {
-        await axios.post("http://localhost:8080/api/users", currentUser, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        showMessage("User created successfully!", "success");
-      }
-
-      setCurrentUser({ name: "", email: "", password: "", phone: "" });
-      setIsEditing(false);
-      loadUsers(currentPage);
-    } catch (error: any) {
-      console.error("Error saving user:", error);
-      showMessage(
-        error.response?.data?.message || "Failed to save user",
-        "error"
-      );
-    }
-  };
-
-  const editUser = async (id: number) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/api/users/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setCurrentUser(response.data);
-      setIsEditing(true);
-    } catch (error) {
-      console.error("Error loading user:", error);
-      showMessage("Failed to load user details", "error");
-    }
-  };
-
-  const deleteUser = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
-
-    try {
-      await axios.delete(`http://localhost:8080/api/users/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+    if (isEditing && currentUser.id) {
+      updateUserMutation.mutate({
+        id: currentUser.id,
+        userData: {
+          name: currentUser.name,
+          email: currentUser.email,
+          phone: currentUser.phone,
+        },
       });
-      showMessage("User deleted successfully!", "success");
-      loadUsers(currentPage);
-    } catch (error: any) {
-      console.error("Error deleting user:", error);
-      showMessage(
-        error.response?.data?.message || "Failed to delete user",
-        "error"
-      );
+    } else {
+      createUserMutation.mutate({
+        name: currentUser.name,
+        email: currentUser.email,
+        password: currentUser.password,
+        phone: currentUser.phone || "",
+      });
+    }
+
+    setCurrentUser({ name: "", email: "", password: "", phone: "" });
+    setIsEditing(false);
+  };
+
+  const editUser = (_id: number) => {
+    // This will be handled by the UserManagement component
+    // We just need to set the editing state
+    setIsEditing(true);
+  };
+
+  const deleteUser = (id: number) => {
+    if (confirm("Are you sure you want to delete this user?")) {
+      deleteUserMutation.mutate(id);
     }
   };
 
   if (!token) {
     return (
       <Box bg="blue" c="white" p="xl">
-        <AuthView
-          onSuccess={handleAuthSuccess}
-          onError={(msg) => showMessage(msg, "error")}
-        />
+        <AuthView onSuccess={handleAuthSuccess} onError={(_msg) => {}} />
+      </Box>
+    );
+  }
+
+  // Show loading state while fetching user data
+  if (!currentUserData) {
+    return (
+      <Box p="xl" ta="center">
+        <Text size="lg" c="dimmed">
+          Loading user data...
+        </Text>
       </Box>
     );
   }
@@ -194,22 +242,36 @@ function App() {
       userProfile={userProfile}
       onProfileClick={() => setProfileModalOpened(true)}
       onLogout={logout}
+      onNavigate={handleNavigate}
+      currentPage={currentView}
     >
-      <UserManagement
-        users={users}
-        currentUser={currentUser}
-        setCurrentUser={setCurrentUser}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        loading={loading}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onSubmit={handleSubmit}
-        onEdit={editUser}
-        onDelete={deleteUser}
-        onRefresh={() => loadUsers(currentPage)}
-        onPageChange={loadUsers}
-      />
+      {token && ( // Only render components when there's a token
+        <>
+          {currentView === "dashboard" && <Dashboard />}
+          {currentView === "users" && (
+            <UserManagement
+              users={usersData?.content || []}
+              currentUser={currentUser}
+              setCurrentUser={setCurrentUser}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+              loading={usersLoading}
+              currentPage={currentPage}
+              totalPages={usersData?.totalPages || 1}
+              onSubmit={handleSubmit}
+              onEdit={editUser}
+              onDelete={deleteUser}
+              onRefresh={() => {}}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
+          )}
+          {currentView === "departments" && <DepartmentManagement />}
+          {currentView === "jobs" && <JobManagement />}
+          {currentView === "employees" && <EmployeeManagement />}
+
+          {currentView === "translations" && <TranslationManagement />}
+        </>
+      )}
 
       {/* Profile Modal */}
       <ProfileModal
@@ -218,9 +280,9 @@ function App() {
         userProfile={userProfile}
         setUserProfile={setUserProfile}
         onSave={() => {
-          showMessage("Profile updated successfully!", "success");
           setProfileModalOpened(false);
         }}
+        onRefresh={() => {}}
       />
     </Layout>
   );

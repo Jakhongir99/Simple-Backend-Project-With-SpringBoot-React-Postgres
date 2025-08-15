@@ -1,10 +1,10 @@
 package com.example.aspect;
 
 import com.example.annotation.RequireRole;
-import com.example.entity.User;
-import com.example.entity.UserRole;
+import com.example.user.entity.User;
+import com.example.user.enums.UserRole;
 import com.example.exception.InsufficientPrivilegesException;
-import com.example.repository.UserRepository;
+import com.example.user.repository.UserRepository;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;

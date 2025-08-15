@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Create employees table if it doesn't exist -->
+    <changeSet id="005-create-employees-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="departments"/>
+                <tableExists tableName="jobs"/>
+                <not>
+                    <tableExists tableName="employees"/>
+                </not>
+            </and>
+        </preConditions>
+        
+        <createTable tableName="employees">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="first_name" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="phone" type="varchar(20)"/>
+            <column name="hire_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="salary" type="decimal(10,2)"/>
+            <column name="department_id" type="bigint"/>
+            <column name="job_id" type="bigint"/>
+            <column name="manager_id" type="bigint"/>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create indexes -->
+        <createIndex tableName="employees" indexName="idx_employees_email">
+            <column name="email"/>
+        </createIndex>
+        
+        <createIndex tableName="employees" indexName="idx_employees_name">
+            <column name="first_name"/>
+            <column name="last_name"/>
+        </createIndex>
+        
+        <createIndex tableName="employees" indexName="idx_employees_department">
+            <column name="department_id"/>
+        </createIndex>
+        
+        <createIndex tableName="employees" indexName="idx_employees_job">
+            <column name="job_id"/>
+        </createIndex>
+        
+        <createIndex tableName="employees" indexName="idx_employees_hire_date">
+            <column name="hire_date"/>
+        </createIndex>
+
+        <!-- Add foreign key constraints -->
+        <addForeignKeyConstraint 
+            baseTableName="employees" 
+            baseColumnNames="department_id" 
+            constraintName="fk_employees_department" 
+            referencedTableName="departments" 
+            referencedColumnNames="id"/>
+            
+        <addForeignKeyConstraint 
+            baseTableName="employees" 
+            baseColumnNames="job_id" 
+            constraintName="fk_employees_job" 
+            referencedTableName="jobs" 
+            referencedColumnNames="id"/>
+
+        <!-- Insert sample employees -->
+        <insert tableName="employees">
+            <column name="first_name" value="John"/>
+            <column name="last_name" value="Smith"/>
+            <column name="email" value="john.smith@company.com"/>
+            <column name="phone" value="555-0101"/>
+            <column name="hire_date" value="2023-01-15"/>
+            <column name="salary" value="75000.00"/>
+            <column name="department_id" value="1"/>
+            <column name="job_id" value="1"/>
+        </insert>
+
+        <insert tableName="employees">
+            <column name="first_name" value="Sarah"/>
+            <column name="last_name" value="Johnson"/>
+            <column name="email" value="sarah.johnson@company.com"/>
+            <column name="phone" value="555-0102"/>
+            <column name="hire_date" value="2023-02-01"/>
+            <column name="salary" value="85000.00"/>
+            <column name="department_id" value="2"/>
+            <column name="job_id" value="2"/>
+        </insert>
+
+        <insert tableName="employees">
+            <column name="first_name" value="Michael"/>
+            <column name="last_name" value="Brown"/>
+            <column name="email" value="michael.brown@company.com"/>
+            <column name="phone" value="555-0103"/>
+            <column name="hire_date" value="2023-03-10"/>
+            <column name="salary" value="70000.00"/>
+            <column name="department_id" value="3"/>
+            <column name="job_id" value="3"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

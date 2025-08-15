@@ -1,5 +1,6 @@
 package com.example.security;
 
+import lombok.RequiredArgsConstructor;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -7,14 +8,10 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 import java.util.function.Function;
 
+@RequiredArgsConstructor
 public class JwtUtil {
     private final String secret;
     private final long expirationMs;
-
-    public JwtUtil(String secret, long expirationMs) {
-        this.secret = secret;
-        this.expirationMs = expirationMs;
-    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

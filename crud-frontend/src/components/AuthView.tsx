@@ -15,6 +15,7 @@ import {
   IconUser,
   IconPhone,
 } from "@tabler/icons-react";
+import { useLogin, useRegister } from "../hooks";
 
 interface AuthViewProps {
   onSuccess: (token: string) => void;
@@ -29,66 +30,44 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerPhone, setRegisterPhone] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const doLogin = async (e: React.FormEvent) => {
+  // React Query hooks
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+
+  const doLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    loginMutation.mutate(
+      { email: loginEmail, password: loginPassword },
+      {
+        onSuccess: (data) => {
+          onSuccess(data.token);
         },
-        body: JSON.stringify({
-          email: loginEmail,
-          password: loginPassword,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        onSuccess(data.token);
-      } else {
-        const errorData = await response.json();
-        onError(errorData.message || "Login failed");
+        onError: (error: any) => {
+          onError(error.response?.data?.message || "Login failed");
+        },
       }
-    } catch (error) {
-      onError("Network error occurred");
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
-  const doRegister = async (e: React.FormEvent) => {
+  const doRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await fetch("http://localhost:8080/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    registerMutation.mutate(
+      {
+        name: registerName,
+        email: registerEmail,
+        password: registerPassword,
+        phone: registerPhone,
+      },
+      {
+        onSuccess: (data) => {
+          onSuccess(data.token);
         },
-        body: JSON.stringify({
-          name: registerName,
-          email: registerEmail,
-          password: registerPassword,
-          phone: registerPhone,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        onSuccess(data.token);
-      } else {
-        const errorData = await response.json();
-        onError(errorData.message || "Registration failed");
+        onError: (error: any) => {
+          onError(error.response?.data?.message || "Registration failed");
+        },
       }
-    } catch (error) {
-      onError("Network error occurred");
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   return (
@@ -176,7 +155,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                   color: "#6c757d",
                   fontWeight: 600,
                   fontSize: "16px",
-                  "&[data-active]": {
+                  "&[dataActive]": {
                     backgroundColor: "rgba(0, 123, 255, 0.3)",
                     color: "black",
                     boxShadow: "0 2px 8px rgba(0, 123, 255, 0.3)",
@@ -234,7 +213,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                     leftSection={<IconLock size={20} />}
                     radius="md"
                     fw={700}
-                    loading={loading}
+                    loading={loginMutation.isPending}
                     bg="#007bff"
                     c="white"
                     h={56}
@@ -334,7 +313,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                     leftSection={<IconUserPlus size={20} />}
                     radius="md"
                     fw={700}
-                    loading={loading}
+                    loading={registerMutation.isPending}
                     bg="#28a745"
                     c="white"
                     h={56}

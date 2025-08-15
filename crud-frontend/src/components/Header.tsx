@@ -1,133 +1,82 @@
 import React from "react";
 import {
   Group,
-  Title,
-  Menu,
-  Avatar,
-  ActionIcon,
-  Burger,
-  Container,
-  Stack,
+  Button,
   Text,
+  ActionIcon,
+  useMantineColorScheme,
+  Select,
 } from "@mantine/core";
-import {
-  IconDashboard,
-  IconBell,
-  IconUser,
-  IconSettings,
-  IconLogout,
-} from "@tabler/icons-react";
+import { IconSun, IconMoon, IconLanguage } from "@tabler/icons-react";
+import { useTheme } from "../contexts/ThemeContext";
+import { useTranslations } from "../hooks/useTranslations";
 
 interface HeaderProps {
-  opened: boolean;
-  setOpened: (opened: boolean) => void;
-  userProfile: {
-    name: string;
-    email: string;
-  };
+  userProfile: any;
   onProfileClick: () => void;
   onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  opened,
-  setOpened,
   userProfile,
   onProfileClick,
   onLogout,
 }) => {
+  const { toggleColorScheme } = useMantineColorScheme();
+  const { theme } = useTheme();
+  const { currentLanguage, changeLanguage, supportedLanguages } =
+    useTranslations();
+
+  const handleLanguageChange = (language: string | null) => {
+    if (language) {
+      changeLanguage(language);
+    }
+  };
+
   return (
-    <Container size="xl" h="100%">
-      <Group justify="space-between" h="100%" px="md">
-        {/* Logo and Title Section */}
-        <Group gap="md">
-          <Group gap="xs">
-            <IconDashboard size={36} color="white" />
-            <Title order={2} c="white" fw={700}>
-              CRUD Dashboard
-            </Title>
-          </Group>
-        </Group>
+    <Group
+      justify="space-between"
+      p="md"
+      style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}
+    >
+      <Text size="xl" fw={700}>
+        CRUD Application
+      </Text>
 
-        {/* Right Section - Notifications and User */}
-        <Group gap="lg">
-          {/* Notification Bell */}
-          <ActionIcon
-            variant="light"
-            size="lg"
-            radius="xl"
-            color="white"
-            style={{ border: "1px solid rgba(255, 255, 255, 0.3)" }}
-          >
-            <IconBell size={20} />
-          </ActionIcon>
+      <Group>
+        {/* Language Selector */}
+        <Select
+          value={currentLanguage}
+          onChange={handleLanguageChange}
+          data={supportedLanguages.map((lang) => ({
+            value: lang,
+            label: lang.toUpperCase(),
+          }))}
+          leftSection={<IconLanguage size={16} />}
+          size="sm"
+          w={80}
+        />
 
-          {/* User Profile Menu */}
-          <Menu shadow="xl" width={280} position="bottom-end" radius="md">
-            <Menu.Target>
-              <Group gap="xs" style={{ cursor: "pointer" }}>
-                <Avatar
-                  src={null}
-                  color="white"
-                  radius="xl"
-                  size="md"
-                  style={{
-                    border: "2px solid rgba(255, 255, 255, 0.4)",
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                  }}
-                >
-                  {userProfile.name.charAt(0).toUpperCase()}
-                </Avatar>
-                <Stack gap={4} align="flex-start">
-                  <Text size="sm" c="white" fw={600}>
-                    {userProfile.name || "User"}
-                  </Text>
-                  <Text size="xs" c="white" opacity={0.8}>
-                    {userProfile.email || "user@example.com"}
-                  </Text>
-                </Stack>
-              </Group>
-            </Menu.Target>
+        {/* Theme Toggle */}
+        <ActionIcon
+          onClick={() => toggleColorScheme()}
+          variant="outline"
+          size="lg"
+          aria-label="Toggle color scheme"
+        >
+          {theme === "dark" ? <IconSun size={18} /> : <IconMoon size={18} />}
+        </ActionIcon>
 
-            <Menu.Dropdown>
-              <Menu.Label>
-                <Group gap="xs">
-                  <IconUser size={16} />
-                  <Text size="sm" fw={600}>
-                    User Profile
-                  </Text>
-                </Group>
-              </Menu.Label>
-              <Menu.Item
-                leftSection={<IconUser size={16} />}
-                onClick={onProfileClick}
-              >
-                Profile Settings
-              </Menu.Item>
-              <Menu.Item leftSection={<IconSettings size={16} />}>
-                Account Settings
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item
-                leftSection={<IconLogout size={16} />}
-                color="red"
-                onClick={onLogout}
-              >
-                Sign Out
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+        {/* User Profile */}
+        <Button variant="subtle" onClick={onProfileClick} size="sm">
+          {userProfile?.name || "Profile"}
+        </Button>
 
-          {/* Mobile Menu Button */}
-          <Burger
-            opened={opened}
-            onChange={() => setOpened(!opened)}
-            hiddenFrom="sm"
-            size="sm"
-            color="white"
-          />
-        </Group>
+        {/* Logout */}
+        <Button variant="outline" color="red" onClick={onLogout} size="sm">
+          Logout
+        </Button>
       </Group>
-    </Container>
+    </Group>
   );
 };

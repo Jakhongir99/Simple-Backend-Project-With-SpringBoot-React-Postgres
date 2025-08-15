@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Create departments table if it doesn't exist -->
+    <changeSet id="003-create-departments-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="departments"/>
+            </not>
+        </preConditions>
+        
+        <createTable tableName="departments">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+            <column name="location" type="varchar(100)"/>
+            <column name="manager_id" type="bigint"/>
+            <column name="budget" type="decimal(15,2)"/>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create indexes -->
+        <createIndex tableName="departments" indexName="idx_departments_name">
+            <column name="name"/>
+        </createIndex>
+        
+        <createIndex tableName="departments" indexName="idx_departments_location">
+            <column name="location"/>
+        </createIndex>
+
+        <!-- Insert sample departments -->
+        <insert tableName="departments">
+            <column name="name" value="Information Technology"/>
+            <column name="description" value="Handles all IT infrastructure and software development"/>
+            <column name="location" value="Building A, Floor 3"/>
+            <column name="budget" value="500000.00"/>
+        </insert>
+
+        <insert tableName="departments">
+            <column name="name" value="Human Resources"/>
+            <column name="description" value="Manages employee relations and recruitment"/>
+            <column name="location" value="Building B, Floor 1"/>
+            <column name="budget" value="200000.00"/>
+        </insert>
+
+        <insert tableName="departments">
+            <column name="name" value="Finance"/>
+            <column name="description" value="Handles financial planning and accounting"/>
+            <column name="location" value="Building A, Floor 2"/>
+            <column name="budget" value="300000.00"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

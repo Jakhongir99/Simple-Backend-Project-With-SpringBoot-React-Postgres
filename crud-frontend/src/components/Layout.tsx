@@ -22,6 +22,8 @@ interface LayoutProps {
   };
   onProfileClick: () => void;
   onLogout: () => void;
+  onNavigate?: (page: string) => void;
+  currentPage?: string;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -31,6 +33,8 @@ export const Layout: React.FC<LayoutProps> = ({
   userProfile,
   onProfileClick,
   onLogout,
+  onNavigate,
+  currentPage,
 }) => {
   return (
     <AppShell
@@ -43,8 +47,6 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Header */}
       <AppShellHeader bg="blue" c="white">
         <Header
-          opened={opened}
-          setOpened={setOpened}
           userProfile={userProfile}
           onProfileClick={onProfileClick}
           onLogout={onLogout}
@@ -53,7 +55,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
       {/* Navbar */}
       <AppShellNavbar bg="white">
-        <Navbar />
+        <Navbar onNavigate={onNavigate} currentPage={currentPage} />
       </AppShellNavbar>
 
       {/* Main Content */}

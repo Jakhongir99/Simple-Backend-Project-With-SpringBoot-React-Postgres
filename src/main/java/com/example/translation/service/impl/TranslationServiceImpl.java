@@ -1,0 +1,240 @@
+package com.example.translation.service.impl;
+
+import com.example.translation.dto.CreateTranslationRequest;
+import com.example.translation.dto.UpdateTranslationRequest;
+import com.example.translation.dto.TranslationDto;
+import com.example.translation.entity.Translation;
+import com.example.translation.repository.TranslationRepository;
+import com.example.translation.service.TranslationService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class TranslationServiceImpl implements TranslationService {
+
+    private final TranslationRepository translationRepository;
+
+    @Override
+    public TranslationDto createTranslation(CreateTranslationRequest request) {
+        log.info("Creating new translation: {} for language: {}", request.getTranslationKey(), request.getLanguageCode());
+
+        if (translationRepository.existsByTranslationKeyAndLanguageCode(request.getTranslationKey(), request.getLanguageCode())) {
+            throw new IllegalArgumentException("Translation with key '" + request.getTranslationKey() + "' already exists for language '" + request.getLanguageCode() + "'");
+        }
+
+        Translation translation = Translation.builder()
+                .translationKey(request.getTranslationKey())
+                .languageCode(request.getLanguageCode())
+                .translationValue(request.getTranslationValue())
+                .description(request.getDescription())
+                .isActive(request.getIsActive())
+                .build();
+
+        Translation savedTranslation = translationRepository.save(translation);
+        log.info("Translation created successfully with ID: {}", savedTranslation.getId());
+
+        return mapToDto(savedTranslation);
+    }
+
+    @Override
+    public TranslationDto updateTranslation(Long id, UpdateTranslationRequest request) {
+        log.info("Updating translation with ID: {}", id);
+
+        Translation translation = translationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Translation not found with ID: " + id));
+
+        // Check if key and language combination conflicts with existing translations
+        if (request.getTranslationKey() != null && request.getLanguageCode() != null) {
+            if (!request.getTranslationKey().equals(translation.getTranslationKey()) || 
+                !request.getLanguageCode().equals(translation.getLanguageCode())) {
+                
+                if (translationRepository.existsByTranslationKeyAndLanguageCode(request.getTranslationKey(), request.getLanguageCode())) {
+                    throw new IllegalArgumentException("Translation with key '" + request.getTranslationKey() + "' already exists for language '" + request.getLanguageCode() + "'");
+                }
+            }
+        } else if (request.getTranslationKey() != null && !request.getTranslationKey().equals(translation.getTranslationKey())) {
+            if (translationRepository.existsByTranslationKeyAndLanguageCode(request.getTranslationKey(), translation.getLanguageCode())) {
+                throw new IllegalArgumentException("Translation with key '" + request.getTranslationKey() + "' already exists for language '" + translation.getLanguageCode() + "'");
+            }
+        } else if (request.getLanguageCode() != null && !request.getLanguageCode().equals(translation.getLanguageCode())) {
+            if (translationRepository.existsByTranslationKeyAndLanguageCode(translation.getTranslationKey(), request.getLanguageCode())) {
+                throw new IllegalArgumentException("Translation with key '" + translation.getTranslationKey() + "' already exists for language '" + request.getLanguageCode() + "'");
+            }
+        }
+
+        if (request.getTranslationKey() != null) {
+            translation.setTranslationKey(request.getTranslationKey());
+        }
+        if (request.getLanguageCode() != null) {
+            translation.setLanguageCode(request.getLanguageCode());
+        }
+        if (request.getTranslationValue() != null) {
+            translation.setTranslationValue(request.getTranslationValue());
+        }
+        if (request.getDescription() != null) {
+            translation.setDescription(request.getDescription());
+        }
+        if (request.getIsActive() != null) {
+            translation.setIsActive(request.getIsActive());
+        }
+
+        translation.setUpdatedAt(LocalDateTime.now());
+        Translation updatedTranslation = translationRepository.save(translation);
+
+        log.info("Translation updated successfully with ID: {}", id);
+        return mapToDto(updatedTranslation);
+    }
+
+    @Override
+    public void deleteTranslation(Long id) {
+        log.info("Deleting translation with ID: {}", id);
+
+        Translation translation = translationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Translation not found with ID: " + id));
+
+        // Soft delete
+        translation.setIsActive(false);
+        translation.setUpdatedAt(LocalDateTime.now());
+        translationRepository.save(translation);
+
+        log.info("Translation deleted successfully with ID: {}", id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<TranslationDto> getTranslationById(Long id) {
+        return translationRepository.findById(id).map(this::mapToDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<TranslationDto> getTranslationByKeyAndLanguage(String translationKey, String languageCode) {
+        return translationRepository.findByTranslationKeyAndLanguageCode(translationKey, languageCode).map(this::mapToDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TranslationDto> getTranslationsByLanguage(String languageCode) {
+        return translationRepository.findByLanguageCodeAndIsActiveTrue(languageCode)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TranslationDto> getAllActiveTranslations() {
+        return translationRepository.findByIsActiveTrue()
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TranslationDto> searchTranslations(String keyword) {
+        return translationRepository.findBySearchTerm(keyword)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TranslationDto> searchTranslationsByLanguage(String languageCode, String keyword) {
+        return translationRepository.findByLanguageAndSearchTerm(languageCode, keyword)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, String> getTranslationsMapForLanguage(String languageCode) {
+        List<Translation> translations = translationRepository.findByLanguageCodeAndIsActiveTrue(languageCode);
+        Map<String, String> translationsMap = new HashMap<>();
+        
+        for (Translation translation : translations) {
+            translationsMap.put(translation.getTranslationKey(), translation.getTranslationValue());
+        }
+        
+        return translationsMap;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getAllActiveTranslationKeys() {
+        return translationRepository.findAllActiveTranslationKeys();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getAvailableLanguages() {
+        return translationRepository.findDistinctLanguageCodes();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByKeyAndLanguage(String translationKey, String languageCode) {
+        return translationRepository.existsByTranslationKeyAndLanguageCode(translationKey, languageCode);
+    }
+
+    @Override
+    public void bulkCreateTranslations(List<CreateTranslationRequest> requests) {
+        log.info("Bulk creating {} translations", requests.size());
+        
+        for (CreateTranslationRequest request : requests) {
+            try {
+                createTranslation(request);
+            } catch (Exception e) {
+                log.error("Error creating translation for key: {} and language: {}", 
+                    request.getTranslationKey(), request.getLanguageCode(), e);
+                throw e;
+            }
+        }
+        
+        log.info("Bulk translation creation completed");
+    }
+
+    @Override
+    public void bulkUpdateTranslations(Map<Long, UpdateTranslationRequest> updates) {
+        log.info("Bulk updating {} translations", updates.size());
+        
+        for (Map.Entry<Long, UpdateTranslationRequest> entry : updates.entrySet()) {
+            try {
+                updateTranslation(entry.getKey(), entry.getValue());
+            } catch (Exception e) {
+                log.error("Error updating translation with ID: {}", entry.getKey(), e);
+                throw e;
+            }
+        }
+        
+        log.info("Bulk translation update completed");
+    }
+
+    private TranslationDto mapToDto(Translation translation) {
+        return TranslationDto.builder()
+                .id(translation.getId())
+                .translationKey(translation.getTranslationKey())
+                .languageCode(translation.getLanguageCode())
+                .translationValue(translation.getTranslationValue())
+                .description(translation.getDescription())
+                .isActive(translation.getIsActive())
+                .createdAt(translation.getCreatedAt())
+                .updatedAt(translation.getUpdatedAt())
+                .build();
+    }
+}
