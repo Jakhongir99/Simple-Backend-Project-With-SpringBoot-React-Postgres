@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="009-create-files-table" author="jahongir">
+        <comment>Create files table for file upload and download functionality</comment>
+        
+        <createTable tableName="files">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="original_file_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stored_file_name" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="file_path" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_size" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mime_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="uploaded_by" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Add indexes for better performance -->
+        <createIndex tableName="files" indexName="idx_files_uploaded_by">
+            <column name="uploaded_by"/>
+        </createIndex>
+        
+        <createIndex tableName="files" indexName="idx_files_file_type">
+            <column name="file_type"/>
+        </createIndex>
+        
+        <createIndex tableName="files" indexName="idx_files_is_public">
+            <column name="is_public"/>
+        </createIndex>
+        
+        <createIndex tableName="files" indexName="idx_files_is_active">
+            <column name="is_active"/>
+        </createIndex>
+        
+        <createIndex tableName="files" indexName="idx_files_created_at">
+            <column name="created_at"/>
+        </createIndex>
+        
+        <createIndex tableName="files" indexName="idx_files_stored_file_name">
+            <column name="stored_file_name"/>
+        </createIndex>
+        
+        <!-- Add foreign key constraint to users table if it exists -->
+        <sql>
+            ALTER TABLE files ADD CONSTRAINT fk_files_uploaded_by 
+            FOREIGN KEY (uploaded_by) REFERENCES users(email) ON DELETE CASCADE;
+        </sql>
+        
+    </changeSet>
+    
+</databaseChangeLog>

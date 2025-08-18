@@ -12,6 +12,7 @@ import JobManagement from "./components/JobManagement";
 import EmployeeManagement from "./components/EmployeeManagement";
 
 import TranslationManagement from "./components/TranslationManagement";
+import FileManagement from "./components/FileManagement";
 import {
   useCurrentUser,
   useUsers,
@@ -95,14 +96,6 @@ function App() {
       });
     }
   }, [token, currentUserData]);
-
-  // Debug: Log users data
-  useEffect(() => {
-    console.log("Users data:", usersData);
-    console.log("Users loading:", usersLoading);
-    console.log("Token:", token);
-    console.log("Current user data:", currentUserData);
-  }, [usersData, usersLoading, token, currentUserData]);
 
   // Listen for authentication events
   useEffect(() => {
@@ -270,6 +263,7 @@ function App() {
           {currentView === "employees" && <EmployeeManagement />}
 
           {currentView === "translations" && <TranslationManagement />}
+          {currentView === "files" && <FileManagement />}
         </>
       )}
 

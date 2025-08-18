@@ -15,6 +15,7 @@ import {
   IconBuilding,
   IconBriefcase,
   IconUserCheck,
+  IconFile,
 } from "@tabler/icons-react";
 
 interface NavbarProps {
@@ -105,6 +106,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onNavigate?.("translations")}
           >
             Translations
+          </Button>
+
+          <Button
+            variant={currentPage === "files" ? "filled" : "light"}
+            leftSection={<IconFile size={16} />}
+            justify="flex-start"
+            fullWidth
+            size="md"
+            color="blue"
+            onClick={() => onNavigate?.("files")}
+          >
+            File Management
           </Button>
         </Stack>
       </AppShell.Section>

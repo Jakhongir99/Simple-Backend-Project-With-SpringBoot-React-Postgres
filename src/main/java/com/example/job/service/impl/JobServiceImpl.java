@@ -5,6 +5,7 @@ import com.example.job.dto.CreateJobRequest;
 import com.example.job.dto.UpdateJobRequest;
 import com.example.job.service.JobService;
 import com.example.job.entity.Job;
+import com.example.job.mapper.JobMapper;
 import com.example.job.repository.JobRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +28,14 @@ import java.math.BigDecimal;
 public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
+    private final JobMapper jobMapper;
 
     @Override
     @Transactional(readOnly = true)
     public Page<JobDto> getAllJobs(Pageable pageable) {
         log.info("Fetching all jobs with pagination: {}", pageable);
         Page<Job> jobs = jobRepository.findAll(pageable);
-        return jobs.map(this::mapToDto);
+        return jobs.map(jobMapper::toDto);
     }
 
     @Override
@@ -42,7 +44,7 @@ public class JobServiceImpl implements JobService {
         log.info("Fetching all active jobs");
         List<Job> jobs = jobRepository.findByIsActiveTrue();
         return jobs.stream()
-                .map(this::mapToDto)
+                .map(jobMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -51,7 +53,7 @@ public class JobServiceImpl implements JobService {
     public Optional<JobDto> getJobById(Long id) {
         log.info("Fetching job by ID: {}", id);
         return jobRepository.findById(id)
-                .map(this::mapToDto);
+                .map(jobMapper::toDto);
     }
 
     @Override
@@ -59,7 +61,7 @@ public class JobServiceImpl implements JobService {
     public Optional<JobDto> getJobByTitle(String title) {
         log.info("Fetching job by title: {}", title);
         return jobRepository.findByTitle(title)
-                .map(this::mapToDto);
+                .map(jobMapper::toDto);
     }
 
     @Override
@@ -77,20 +79,13 @@ public class JobServiceImpl implements JobService {
             }
         }
 
-        Job job = Job.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .minSalary(request.getMinSalary())
-                .maxSalary(request.getMaxSalary())
-                .requirements(request.getRequirements())
-                .benefits(request.getBenefits())
-                .isActive(true)
-                .build();
+        Job job = jobMapper.toEntity(request);
+        job.setIsActive(true);
 
         Job savedJob = jobRepository.save(job);
         log.info("Job created successfully with ID: {}", savedJob.getId());
         
-        return mapToDto(savedJob);
+        return jobMapper.toDto(savedJob);
     }
 
     @Override
@@ -105,27 +100,10 @@ public class JobServiceImpl implements JobService {
             if (jobRepository.existsByTitle(request.getTitle())) {
                 throw new IllegalArgumentException("Job with title '" + request.getTitle() + "' already exists");
             }
-            job.setTitle(request.getTitle());
         }
 
-        if (request.getDescription() != null) {
-            job.setDescription(request.getDescription());
-        }
-        if (request.getMinSalary() != null) {
-            job.setMinSalary(request.getMinSalary());
-        }
-        if (request.getMaxSalary() != null) {
-            job.setMaxSalary(request.getMaxSalary());
-        }
-        if (request.getRequirements() != null) {
-            job.setRequirements(request.getRequirements());
-        }
-        if (request.getBenefits() != null) {
-            job.setBenefits(request.getBenefits());
-        }
-        if (request.getIsActive() != null) {
-            job.setIsActive(request.getIsActive());
-        }
+        // Update job using mapper
+        jobMapper.updateEntity(job, request);
 
         // Validate salary range if both are being updated
         if (job.getMinSalary() != null && job.getMaxSalary() != null) {
@@ -138,7 +116,7 @@ public class JobServiceImpl implements JobService {
         Job updatedJob = jobRepository.save(job);
         
         log.info("Job updated successfully with ID: {}", id);
-        return mapToDto(updatedJob);
+        return jobMapper.toDto(updatedJob);
     }
 
     @Override
@@ -162,7 +140,7 @@ public class JobServiceImpl implements JobService {
         log.info("Searching jobs with keyword: {}", keyword);
         List<Job> jobs = jobRepository.searchByKeyword(keyword);
         return jobs.stream()
-                .map(this::mapToDto)
+                .map(jobMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -173,7 +151,7 @@ public class JobServiceImpl implements JobService {
         List<Job> jobs = jobRepository.findByMinSalaryGreaterThanEqual(minSalary);
         return jobs.stream()
                 .filter(job -> job.getMaxSalary() == null || job.getMaxSalary() <= maxSalary)
-                .map(this::mapToDto)
+                .map(jobMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -190,23 +168,5 @@ public class JobServiceImpl implements JobService {
         return jobRepository.existsByTitle(title);
     }
 
-    private JobDto mapToDto(Job job) {
-        JobDto dto = JobDto.builder()
-                .id(job.getId())
-                .title(job.getTitle())
-                .description(job.getDescription())
-                .minSalary(job.getMinSalary())
-                .maxSalary(job.getMaxSalary())
-                .requirements(job.getRequirements())
-                .benefits(job.getBenefits())
-                .isActive(job.getIsActive())
-                .createdAt(job.getCreatedAt())
-                .updatedAt(job.getUpdatedAt())
-                .build();
 
-        // Set additional fields
-        dto.setEmployeeCount(jobRepository.countEmployeesByJob(job.getId()));
-        
-        return dto;
-    }
 }

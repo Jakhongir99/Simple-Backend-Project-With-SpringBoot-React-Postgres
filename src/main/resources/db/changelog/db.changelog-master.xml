@@ -10,9 +10,9 @@
     <include file="db/changelog/changes/002-add-user-role.xml"/>
     <include file="db/changelog/changes/003-create-departments-table.xml"/>
     <include file="db/changelog/changes/004-create-jobs-table.xml"/>
-               <include file="db/changelog/changes/005-create-employees-table.xml"/>
-           <include file="db/changelog/changes/006-remove-flyway-schema-history.xml"/>
-
-           <include file="db/changelog/changes/008-create-translations-table.xml"/>
+    <include file="db/changelog/changes/005-create-employees-table.xml"/>
+    <include file="db/changelog/changes/006-remove-flyway-schema-history.xml"/>
+    <include file="db/changelog/changes/008-create-translations-table.xml"/>
+    <include file="db/changelog/changes/009-create-files-table.xml"/>
 
 </databaseChangeLog>

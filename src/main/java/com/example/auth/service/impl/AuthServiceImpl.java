@@ -66,12 +66,12 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
         if (user == null) {
             log.warn("Login failed (account not found) for: {}", request.getEmail());
-            throw new InvalidCredentialsException("User not found");
+            throw new InvalidCredentialsException("User not found with the provided email address");
         }
         
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             log.warn("Login failed (wrong password) for: {}", request.getEmail());
-            throw new InvalidCredentialsException("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid password");
         }
         
         log.info("Login success for: {}", request.getEmail());

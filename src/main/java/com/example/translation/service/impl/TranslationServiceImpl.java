@@ -4,6 +4,7 @@ import com.example.translation.dto.CreateTranslationRequest;
 import com.example.translation.dto.UpdateTranslationRequest;
 import com.example.translation.dto.TranslationDto;
 import com.example.translation.entity.Translation;
+import com.example.translation.mapper.TranslationMapper;
 import com.example.translation.repository.TranslationRepository;
 import com.example.translation.service.TranslationService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class TranslationServiceImpl implements TranslationService {
 
     private final TranslationRepository translationRepository;
+    private final TranslationMapper translationMapper;
 
     @Override
     public TranslationDto createTranslation(CreateTranslationRequest request) {
@@ -35,18 +37,12 @@ public class TranslationServiceImpl implements TranslationService {
             throw new IllegalArgumentException("Translation with key '" + request.getTranslationKey() + "' already exists for language '" + request.getLanguageCode() + "'");
         }
 
-        Translation translation = Translation.builder()
-                .translationKey(request.getTranslationKey())
-                .languageCode(request.getLanguageCode())
-                .translationValue(request.getTranslationValue())
-                .description(request.getDescription())
-                .isActive(request.getIsActive())
-                .build();
+        Translation translation = translationMapper.toEntity(request);
 
         Translation savedTranslation = translationRepository.save(translation);
         log.info("Translation created successfully with ID: {}", savedTranslation.getId());
 
-        return mapToDto(savedTranslation);
+        return translationMapper.toDto(savedTranslation);
     }
 
     @Override
@@ -75,27 +71,14 @@ public class TranslationServiceImpl implements TranslationService {
             }
         }
 
-        if (request.getTranslationKey() != null) {
-            translation.setTranslationKey(request.getTranslationKey());
-        }
-        if (request.getLanguageCode() != null) {
-            translation.setLanguageCode(request.getLanguageCode());
-        }
-        if (request.getTranslationValue() != null) {
-            translation.setTranslationValue(request.getTranslationValue());
-        }
-        if (request.getDescription() != null) {
-            translation.setDescription(request.getDescription());
-        }
-        if (request.getIsActive() != null) {
-            translation.setIsActive(request.getIsActive());
-        }
+        // Update translation using mapper
+        translationMapper.updateEntity(translation, request);
 
         translation.setUpdatedAt(LocalDateTime.now());
         Translation updatedTranslation = translationRepository.save(translation);
 
         log.info("Translation updated successfully with ID: {}", id);
-        return mapToDto(updatedTranslation);
+        return translationMapper.toDto(updatedTranslation);
     }
 
     @Override
@@ -116,13 +99,13 @@ public class TranslationServiceImpl implements TranslationService {
     @Override
     @Transactional(readOnly = true)
     public Optional<TranslationDto> getTranslationById(Long id) {
-        return translationRepository.findById(id).map(this::mapToDto);
+        return translationRepository.findById(id).map(translationMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<TranslationDto> getTranslationByKeyAndLanguage(String translationKey, String languageCode) {
-        return translationRepository.findByTranslationKeyAndLanguageCode(translationKey, languageCode).map(this::mapToDto);
+        return translationRepository.findByTranslationKeyAndLanguageCode(translationKey, languageCode).map(translationMapper::toDto);
     }
 
     @Override
@@ -130,7 +113,7 @@ public class TranslationServiceImpl implements TranslationService {
     public List<TranslationDto> getTranslationsByLanguage(String languageCode) {
         return translationRepository.findByLanguageCodeAndIsActiveTrue(languageCode)
                 .stream()
-                .map(this::mapToDto)
+                .map(translationMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -139,7 +122,7 @@ public class TranslationServiceImpl implements TranslationService {
     public List<TranslationDto> getAllActiveTranslations() {
         return translationRepository.findByIsActiveTrue()
                 .stream()
-                .map(this::mapToDto)
+                .map(translationMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -148,7 +131,7 @@ public class TranslationServiceImpl implements TranslationService {
     public List<TranslationDto> searchTranslations(String keyword) {
         return translationRepository.findBySearchTerm(keyword)
                 .stream()
-                .map(this::mapToDto)
+                .map(translationMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -157,7 +140,7 @@ public class TranslationServiceImpl implements TranslationService {
     public List<TranslationDto> searchTranslationsByLanguage(String languageCode, String keyword) {
         return translationRepository.findByLanguageAndSearchTerm(languageCode, keyword)
                 .stream()
-                .map(this::mapToDto)
+                .map(translationMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -225,16 +208,5 @@ public class TranslationServiceImpl implements TranslationService {
         log.info("Bulk translation update completed");
     }
 
-    private TranslationDto mapToDto(Translation translation) {
-        return TranslationDto.builder()
-                .id(translation.getId())
-                .translationKey(translation.getTranslationKey())
-                .languageCode(translation.getLanguageCode())
-                .translationValue(translation.getTranslationValue())
-                .description(translation.getDescription())
-                .isActive(translation.getIsActive())
-                .createdAt(translation.getCreatedAt())
-                .updatedAt(translation.getUpdatedAt())
-                .build();
-    }
+
 }

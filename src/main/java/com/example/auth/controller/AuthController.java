@@ -25,24 +25,14 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        try {
-            AuthResponse response = authService.register(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error during registration: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        AuthResponse response = authService.register(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error during login: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
@@ -58,13 +48,8 @@ public class AuthController {
     
     @PostMapping("/create-admin")
     public ResponseEntity<AuthResponse> createFirstAdmin(@Valid @RequestBody RegisterRequest request) {
-        try {
-            AuthResponse response = authService.createAdmin(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error creating admin: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        AuthResponse response = authService.createAdmin(request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")

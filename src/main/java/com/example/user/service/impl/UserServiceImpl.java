@@ -8,6 +8,7 @@ import com.example.user.enums.UserRole;
 import com.example.user.exception.PasswordValidationException;
 import com.example.user.exception.UserNotFoundException;
 import com.example.user.exception.UserValidationException;
+import com.example.user.mapper.UserMapper;
 import com.example.user.repository.UserRepository;
 import com.example.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Override
     public UserDto createUser(CreateUserRequest request) {
@@ -51,19 +53,14 @@ public class UserServiceImpl implements UserService {
         // Validate password
         validatePassword(request.getPassword());
         
-        // Create user
-        User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .build();
+        // Create user using mapper
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         
         User savedUser = userRepository.save(user);
         log.info("User created successfully with ID: {}", savedUser.getId());
         
-        return mapToDto(savedUser);
+        return userMapper.toDto(savedUser);
     }
 
     @Override
@@ -92,28 +89,19 @@ public class UserServiceImpl implements UserService {
             }
         }
         
-        // Update fields
-        if (request.getName() != null) {
-            user.setName(request.getName());
-        }
-        if (request.getEmail() != null) {
-            user.setEmail(request.getEmail());
-        }
-        if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
-        }
+        // Update user using mapper
+        userMapper.updateEntity(user, request);
+        
+        // Update password if provided
         if (request.getPassword() != null) {
             validatePassword(request.getPassword());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-        if (request.getRole() != null) {
-            user.setRole(request.getRole());
         }
         
         User updatedUser = userRepository.save(user);
         log.info("User updated successfully with ID: {}", updatedUser.getId());
         
-        return mapToDto(updatedUser);
+        return userMapper.toDto(updatedUser);
     }
 
     @Override
@@ -130,22 +118,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<UserDto> getUserById(Long id) {
-        return userRepository.findById(id).map(this::mapToDto);
+        return userRepository.findById(id).map(userMapper::toDto);
     }
 
     @Override
     public Optional<UserDto> getUserByEmail(String email) {
-        return userRepository.findByEmail(email).map(this::mapToDto);
+        return userRepository.findByEmail(email).map(userMapper::toDto);
     }
 
     @Override
     public Page<UserDto> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable).map(this::mapToDto);
+        return userRepository.findAll(pageable).map(userMapper::toDto);
     }
 
     @Override
     public Page<UserDto> searchUsers(String search, Pageable pageable) {
-        return userRepository.findBySearchCriteria(search, pageable).map(this::mapToDto);
+        return userRepository.findBySearchCriteria(search, pageable).map(userMapper::toDto);
     }
 
     @Override
@@ -200,17 +188,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private UserDto mapToDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .role(user.getRole())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-    }
+
 
     private void validatePassword(String password) {
         if (password == null || password.trim().isEmpty()) {

@@ -16,26 +16,26 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      staleTime: 10 * 60 * 1000, // 10 minutes - increased from 5
+      gcTime: 30 * 60 * 1000, // 30 minutes - increased from 10
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: false, // Prevent refetch on window focus
+      refetchOnMount: false, // Only refetch if data is stale
+      refetchOnReconnect: false, // Prevent refetch on reconnect
     },
   },
 });
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <LanguageProvider>
-          <MantineProvider defaultColorScheme="light">
-            <Notifications position="top-right" />
-            <App />
-            <ReactQueryDevtools initialIsOpen={false} />
-          </MantineProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
-  </StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <LanguageProvider>
+        <MantineProvider defaultColorScheme="light">
+          <Notifications position="top-right" />
+          <App />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </MantineProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
 );

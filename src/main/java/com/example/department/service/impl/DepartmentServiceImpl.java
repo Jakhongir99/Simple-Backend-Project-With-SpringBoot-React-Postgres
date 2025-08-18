@@ -5,6 +5,7 @@ import com.example.department.dto.CreateDepartmentRequest;
 import com.example.department.dto.UpdateDepartmentRequest;
 import com.example.department.service.DepartmentService;
 import com.example.department.entity.Department;
+import com.example.department.mapper.DepartmentMapper;
 import com.example.department.repository.DepartmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +27,14 @@ import java.util.stream.Collectors;
 public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
+    private final DepartmentMapper departmentMapper;
 
     @Override
     @Transactional(readOnly = true)
     public Page<DepartmentDto> getAllDepartments(Pageable pageable) {
         log.info("Fetching all departments with pagination: {}", pageable);
         Page<Department> departments = departmentRepository.findAll(pageable);
-        return departments.map(this::mapToDto);
+        return departments.map(departmentMapper::toDto);
     }
 
     @Override
@@ -41,7 +43,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         log.info("Fetching all active departments");
         List<Department> departments = departmentRepository.findByIsActiveTrue();
         return departments.stream()
-                .map(this::mapToDto)
+                .map(departmentMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -50,7 +52,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     public Optional<DepartmentDto> getDepartmentById(Long id) {
         log.info("Fetching department by ID: {}", id);
         return departmentRepository.findById(id)
-                .map(this::mapToDto);
+                .map(departmentMapper::toDto);
     }
 
     @Override
@@ -58,7 +60,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     public Optional<DepartmentDto> getDepartmentByName(String name) {
         log.info("Fetching department by name: {}", name);
         return departmentRepository.findByName(name)
-                .map(this::mapToDto);
+                .map(departmentMapper::toDto);
     }
 
     @Override
@@ -69,19 +71,13 @@ public class DepartmentServiceImpl implements DepartmentService {
             throw new IllegalArgumentException("Department with name '" + request.getName() + "' already exists");
         }
 
-        Department department = Department.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .location(request.getLocation())
-                .managerId(request.getManagerId())
-                .budget(request.getBudget())
-                .isActive(true)
-                .build();
+        Department department = departmentMapper.toEntity(request);
+        department.setIsActive(true);
 
         Department savedDepartment = departmentRepository.save(department);
         log.info("Department created successfully with ID: {}", savedDepartment.getId());
         
-        return mapToDto(savedDepartment);
+        return departmentMapper.toDto(savedDepartment);
     }
 
     @Override
@@ -96,30 +92,16 @@ public class DepartmentServiceImpl implements DepartmentService {
             if (departmentRepository.existsByName(request.getName())) {
                 throw new IllegalArgumentException("Department with name '" + request.getName() + "' already exists");
             }
-            department.setName(request.getName());
         }
 
-        if (request.getDescription() != null) {
-            department.setDescription(request.getDescription());
-        }
-        if (request.getLocation() != null) {
-            department.setLocation(request.getLocation());
-        }
-        if (request.getManagerId() != null) {
-            department.setManagerId(request.getManagerId());
-        }
-        if (request.getBudget() != null) {
-            department.setBudget(request.getBudget());
-        }
-        if (request.getIsActive() != null) {
-            department.setIsActive(request.getIsActive());
-        }
+        // Update department using mapper
+        departmentMapper.updateEntity(department, request);
 
         department.setUpdatedAt(LocalDateTime.now());
         Department updatedDepartment = departmentRepository.save(department);
         
         log.info("Department updated successfully with ID: {}", id);
-        return mapToDto(updatedDepartment);
+        return departmentMapper.toDto(updatedDepartment);
     }
 
     @Override
@@ -143,7 +125,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         log.info("Searching departments with keyword: {}", keyword);
         List<Department> departments = departmentRepository.searchByKeyword(keyword);
         return departments.stream()
-                .map(this::mapToDto)
+                .map(departmentMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -153,7 +135,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         log.info("Fetching departments by location: {}", location);
         List<Department> departments = departmentRepository.findByLocation(location);
         return departments.stream()
-                .map(this::mapToDto)
+                .map(departmentMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -170,22 +152,5 @@ public class DepartmentServiceImpl implements DepartmentService {
         return departmentRepository.existsByName(name);
     }
 
-    private DepartmentDto mapToDto(Department department) {
-        DepartmentDto dto = DepartmentDto.builder()
-                .id(department.getId())
-                .name(department.getName())
-                .description(department.getDescription())
-                .location(department.getLocation())
-                .managerId(department.getManagerId())
-                .budget(department.getBudget())
-                .isActive(department.getIsActive())
-                .createdAt(department.getCreatedAt())
-                .updatedAt(department.getUpdatedAt())
-                .build();
 
-        // Set additional fields
-        dto.setEmployeeCount(departmentRepository.countEmployeesByDepartment(department.getId()));
-        
-        return dto;
-    }
 }
