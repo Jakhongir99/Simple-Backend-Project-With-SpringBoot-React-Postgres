@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authAPI } from "../utils/api";
 import { notifications } from "@mantine/notifications";
+import { useState, useEffect } from "react";
 
 export interface LoginCredentials {
   email: string;
@@ -23,6 +24,44 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
+
+// Authentication context hook
+export const useAuth = () => {
+  const [token, setToken] = useState<string | null>(
+    typeof window !== "undefined" ? localStorage.getItem("token") : null
+  );
+
+  const { data: currentUser } = useCurrentUser(token);
+
+  useEffect(() => {
+    // Listen for storage changes (e.g., when token is set/removed in another tab)
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem("token");
+      setToken(newToken);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const login = (newToken: string) => {
+    localStorage.setItem("token", newToken);
+    setToken(newToken);
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+  };
+
+  return {
+    token,
+    user: currentUser,
+    isAuthenticated: !!token,
+    login,
+    logout,
+  };
+};
 
 // Authentication hooks
 export const useLogin = () => {

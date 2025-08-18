@@ -14,7 +14,7 @@ import EmployeeManagement from "./components/EmployeeManagement";
 import TranslationManagement from "./components/TranslationManagement";
 import FileManagement from "./components/FileManagement";
 import {
-  useCurrentUser,
+  useAuth,
   useUsers,
   useCreateUser,
   useUpdateUser,
@@ -46,9 +46,6 @@ function App() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [currentView, setCurrentView] = useState<string>("dashboard");
   const pageSize = 5;
-  const [token, setToken] = useState<string | null>(
-    typeof window !== "undefined" ? localStorage.getItem("token") : null
-  );
 
   // New state for enhanced UI
   const [opened, setOpened] = useState(false);
@@ -65,12 +62,14 @@ function App() {
   // Theme context
   const { theme } = useTheme();
 
+  // Authentication hook
+  const { token, user: currentUserData, isAuthenticated } = useAuth();
+
   // React Query hooks
-  const { data: currentUserData } = useCurrentUser(token);
   const { data: usersData, isLoading: usersLoading } = useUsers(
     currentPage - 1,
     pageSize,
-    !!token // Enable as soon as we have a token
+    isAuthenticated // Enable as soon as we have a token
   );
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
@@ -136,7 +135,7 @@ function App() {
 
   // Periodic token validation check
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     const interval = setInterval(() => {
       if (!checkAuthStatus()) {
@@ -150,17 +149,14 @@ function App() {
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [token]);
+  }, [isAuthenticated]);
 
   const handleAuthSuccess = (newToken: string) => {
-    setToken(newToken);
-    localStorage.setItem("token", newToken);
+    // The useAuth hook will handle token storage
   };
 
   const logout = () => {
     logoutMutation.mutate();
-    setToken(null);
-    localStorage.removeItem("token");
     setCurrentUser({ name: "", email: "", password: "", phone: "" });
     setIsEditing(false);
   };
@@ -209,7 +205,7 @@ function App() {
     }
   };
 
-  if (!token) {
+  if (!isAuthenticated) {
     return (
       <Box bg="blue" c="white" p="xl">
         <AuthView onSuccess={handleAuthSuccess} onError={(_msg) => {}} />
@@ -238,7 +234,7 @@ function App() {
       onNavigate={handleNavigate}
       currentPage={currentView}
     >
-      {token && ( // Only render components when there's a token
+      {isAuthenticated && ( // Only render components when there's a token
         <>
           {currentView === "dashboard" && <Dashboard />}
           {currentView === "users" && (
