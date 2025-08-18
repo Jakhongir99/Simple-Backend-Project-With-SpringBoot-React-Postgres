@@ -26,7 +26,7 @@ public class TranslationController {
     private final TranslationService translationService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<TranslationDto>> getAllTranslations() {
         try {
             List<TranslationDto> translations = translationService.getAllActiveTranslations();
@@ -60,7 +60,7 @@ public class TranslationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TranslationDto> getTranslationById(@PathVariable Long id) {
         try {
             Optional<TranslationDto> translation = translationService.getTranslationById(id);
@@ -87,7 +87,7 @@ public class TranslationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TranslationDto> createTranslation(@Valid @RequestBody CreateTranslationRequest request) {
         try {
             TranslationDto createdTranslation = translationService.createTranslation(request);
@@ -99,7 +99,7 @@ public class TranslationController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TranslationDto> updateTranslation(
             @PathVariable Long id,
             @Valid @RequestBody UpdateTranslationRequest request) {
@@ -113,7 +113,7 @@ public class TranslationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteTranslation(@PathVariable Long id) {
         try {
             translationService.deleteTranslation(id);
@@ -125,7 +125,7 @@ public class TranslationController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<TranslationDto>> searchTranslations(@RequestParam String keyword) {
         try {
             List<TranslationDto> translations = translationService.searchTranslations(keyword);
@@ -137,7 +137,7 @@ public class TranslationController {
     }
 
     @GetMapping("/search/language/{languageCode}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<TranslationDto>> searchTranslationsByLanguage(
             @PathVariable String languageCode,
             @RequestParam String keyword) {
@@ -151,7 +151,7 @@ public class TranslationController {
     }
 
     @GetMapping("/keys")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<String>> getAllTranslationKeys() {
         try {
             List<String> keys = translationService.getAllActiveTranslationKeys();
@@ -187,7 +187,7 @@ public class TranslationController {
     }
 
     @PostMapping("/bulk")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> bulkCreateTranslations(@Valid @RequestBody List<CreateTranslationRequest> requests) {
         try {
             translationService.bulkCreateTranslations(requests);
@@ -199,7 +199,7 @@ public class TranslationController {
     }
 
     @PutMapping("/bulk")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> bulkUpdateTranslations(@RequestBody Map<Long, UpdateTranslationRequest> updates) {
         try {
             translationService.bulkUpdateTranslations(updates);

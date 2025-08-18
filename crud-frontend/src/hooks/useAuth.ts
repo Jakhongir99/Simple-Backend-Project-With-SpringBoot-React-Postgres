@@ -47,6 +47,10 @@ export const useAuth = () => {
   const login = (newToken: string) => {
     localStorage.setItem("token", newToken);
     setToken(newToken);
+    // Trigger a storage event to sync across tabs
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: "token", newValue: newToken })
+    );
   };
 
   const logout = () => {

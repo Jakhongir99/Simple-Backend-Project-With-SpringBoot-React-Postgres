@@ -46,7 +46,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<UserDto>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -75,7 +75,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasRole('USER') or #id == authentication.principal.id")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         try {
             Optional<UserDto> user = userService.getUserById(id);
@@ -88,7 +88,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
         try {
             UserDto createdUser = userService.createUser(request);
@@ -100,7 +100,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasRole('USER') or #id == authentication.principal.id")
     public ResponseEntity<UserDto> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -114,7 +114,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
@@ -126,7 +126,7 @@ public class UserController {
     }
 
     @GetMapping("/count")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Long> getUserCount() {
         try {
             long count = userService.getUserCount();
@@ -138,7 +138,7 @@ public class UserController {
     }
 
     @GetMapping("/count/role/{role}")
-    @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Long> getUserCountByRole(@PathVariable String role) {
         try {
             long count = userService.getUserCountByRole(role);

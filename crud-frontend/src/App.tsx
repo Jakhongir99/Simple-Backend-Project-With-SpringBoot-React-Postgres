@@ -63,7 +63,13 @@ function App() {
   const { theme } = useTheme();
 
   // Authentication hook
-  const { token, user: currentUserData, isAuthenticated } = useAuth();
+  const {
+    token,
+    user: currentUserData,
+    isAuthenticated,
+    login,
+    logout: authLogout,
+  } = useAuth();
 
   // React Query hooks
   const { data: usersData, isLoading: usersLoading } = useUsers(
@@ -100,8 +106,7 @@ function App() {
   useEffect(() => {
     const handleAuthUnauthorized = (_event: CustomEvent) => {
       // Clear token and redirect to auth
-      setToken(null);
-      localStorage.removeItem("token");
+      authLogout();
       setCurrentUser({ name: "", email: "", password: "", phone: "" });
       setUserProfile({
         name: "",
@@ -152,7 +157,8 @@ function App() {
   }, [isAuthenticated]);
 
   const handleAuthSuccess = (newToken: string) => {
-    // The useAuth hook will handle token storage
+    // Call the login function from useAuth hook
+    login(newToken);
   };
 
   const logout = () => {

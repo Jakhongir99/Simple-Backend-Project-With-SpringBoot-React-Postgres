@@ -363,12 +363,12 @@ const FileManagement: React.FC = () => {
     <Box p="md">
       <LoadingOverlay visible={loading} />
 
-      <Group position="apart" mb="lg">
-        <Text size="xl" weight={700}>
+      <Group justify="space-between" mb="lg">
+        <Text size="xl" fw={700}>
           File Management
         </Text>
         <Button
-          leftIcon={<IconUpload size={16} />}
+          leftSection={<IconUpload size={16} />}
           onClick={() => setUploadModalOpened(true)}
           color="blue"
         >
@@ -384,7 +384,7 @@ const FileManagement: React.FC = () => {
               placeholder="Search files..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              icon={<IconEye size={16} />}
+              leftSection={<IconEye size={16} />}
             />
           </Grid.Col>
           <Grid.Col span={3}>
@@ -421,7 +421,7 @@ const FileManagement: React.FC = () => {
       {/* Files List */}
       {files.length === 0 ? (
         <Card withBorder>
-          <Text align="center" color="dimmed" py="xl">
+          <Text ta="center" color="dimmed" py="xl">
             No files found. Upload your first file to get started!
           </Text>
         </Card>
