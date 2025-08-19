@@ -1,82 +1,14 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import HttpBackend from "i18next-http-backend";
 import LanguageDetector from "i18next-browser-languagedetector";
+import api from "../utils/api";
 
 i18n
-  .use(HttpBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     fallbackLng: "en",
     debug: import.meta.env.DEV,
-
-    // HTTP Backend configuration - OPTIMIZED to prevent duplicate API calls
-    // We'll use both i18next and React Query, but with better coordination
-    backend: {
-      loadPath: "/api/translations/language/{{lng}}/map",
-      addPath: "/api/translations",
-      parse: (data: string) => {
-        try {
-          return JSON.parse(data);
-        } catch (e) {
-          return {};
-        }
-      },
-      parsePayload: (namespace: string, key: string, fallbackValue: string) => {
-        return {
-          translationKey: key,
-          languageCode: i18n.language,
-          translationValue: fallbackValue,
-          description: `Auto-generated translation for ${key}`,
-        };
-      },
-      reloadInterval: false,
-      crossDomain: false,
-      withCredentials: false,
-      requestOptions: {
-        mode: "cors",
-        credentials: "same-origin",
-        cache: "default",
-      },
-      // OPTIMIZE: Only load when language actually changes
-      load: (
-        languages: string[],
-        namespaces: string[],
-        options: any,
-        callback: (error: Error | null, data: any) => void
-      ) => {
-        // Check if we already have this language loaded
-        if (i18n.hasResourceBundle(languages[0], namespaces[0])) {
-          console.log(
-            `[i18n] Language ${languages[0]} already loaded, skipping API call`
-          );
-          callback(null, i18n.getResourceBundle(languages[0], namespaces[0]));
-          return;
-        }
-
-        // Only make API call if language is not already loaded
-        console.log(`[i18n] Loading language ${languages[0]} from API`);
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", `/api/translations/language/${languages[0]}/map`, true);
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              callback(null, data);
-            } catch (e) {
-              callback(e as Error, null);
-            }
-          } else {
-            callback(new Error("Failed to load translations"), null);
-          }
-        };
-        xhr.onerror = function () {
-          callback(new Error("Network error"), null);
-        };
-        xhr.send();
-      },
-    },
 
     // Language detection
     detection: {
@@ -105,10 +37,16 @@ i18n
     defaultNS: "translation",
 
     // Supported languages
-    supportedLngs: ["en", "ru", "uz"],
+    supportedLngs: ["en", "ru", "uz"] as const,
 
-    // Load resources on demand
-    load: "languageOnly",
+    // Load translations from backend
+    load: "all",
+    partialBundledLanguages: true,
+    resources: {
+      en: { translation: {} },
+      ru: { translation: {} },
+      uz: { translation: {} },
+    },
 
     // Cache
     cache: {
@@ -116,20 +54,138 @@ i18n
       expirationTime: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
 
-    // Prevent unnecessary reloads
-    initImmediate: false,
-    partialBundledLanguages: true,
-    resources: {
-      en: {},
-      ru: {},
-      uz: {},
-    },
+    // Enable immediate initialization
+    initImmediate: true,
 
-    // Additional optimizations
-    saveMissing: false, // Don't save missing keys to avoid unnecessary API calls
-    missingKeyHandler: (lng, ns, key, fallbackValue) => {
-      // Just return the key if no translation found, don't make API calls
-      return key;
+    // Enable missing key saving
+    saveMissing: false,
+    saveMissingTo: "all", // Save to all languages
+    missingKeyHandler: async (lng, ns, key, fallbackValue) => {
+      console.log(
+        `Missing translation key: ${key} for language: ${lng}, fallback: ${fallbackValue}`
+      );
+
+      try {
+        // Get current token for authentication
+        const token = localStorage.getItem("token");
+        console.log("🔑 Token check for missing key:", {
+          hasToken: !!token,
+          tokenLength: token?.length,
+          tokenPreview: token ? `${token.substring(0, 20)}...` : "none",
+        });
+
+        if (!token) {
+          console.warn(
+            "No token available, cannot save missing translation key"
+          );
+          return fallbackValue || key;
+        }
+
+        // Create translation entries for all supported languages
+        const supportedLanguages = ["en", "ru", "uz"] as const;
+        const translations = supportedLanguages.map((lang) => ({
+          translationKey: key,
+          languageCode: lang,
+          translationValue:
+            lang === (lng as unknown as string) ? fallbackValue || key : key, // Use fallback for current lang, key for others
+          isActive: true,
+          description: `Auto-generated translation for key: ${key}`, // Add description to avoid validation issues
+        }));
+
+        // Filter out translations that might already exist to avoid constraint violations
+        const newTranslations = translations.filter((translation) => {
+          // For now, we'll try to create all translations and let the backend handle duplicates
+          // The backend should now skip existing translations instead of throwing errors
+          return true;
+        });
+
+        try {
+          // Use bulk endpoint to create all translations at once
+          console.log("🚀 Making bulk API call for missing key:", {
+            url: "http://localhost:8080/api/translations/bulk",
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token?.substring(20)}...`,
+            },
+            data: newTranslations,
+          });
+
+          const response = await fetch(
+            "http://localhost:8080/api/translations/bulk",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+              },
+              body: JSON.stringify(newTranslations),
+            }
+          );
+
+          if (response.ok) {
+            const responseData = await response.json();
+            console.log(
+              `✅ Successfully processed translations for key: ${key}`,
+              {
+                translations: newTranslations,
+                response: responseData,
+                status: response.status,
+              }
+            );
+
+            // Log different messages based on what actually happened
+            if (responseData.created > 0) {
+              console.log(
+                `🆕 Created ${responseData.created} new translations for key: ${key}`
+              );
+            }
+            if (responseData.skipped > 0) {
+              console.log(
+                `⏭️ Skipped ${responseData.skipped} existing translations for key: ${key}`
+              );
+            }
+          } else {
+            let responseData = null;
+            try {
+              responseData = await response.json();
+            } catch {
+              // If response is not JSON, try to get text
+              responseData = await response.text();
+            }
+
+            console.error(
+              `❌ Failed to create translations for key: ${key} - Status: ${response.status}`,
+              {
+                response: responseData,
+                translations: newTranslations,
+                responseHeaders: Object.fromEntries(response.headers.entries()),
+                responseStatus: response.status,
+                responseStatusText: response.statusText,
+              }
+            );
+
+            // Log the exact request that failed for debugging
+            console.error("🔍 Failed request details:", {
+              url: "http://localhost:8080/api/translations/bulk",
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token?.substring(0, 20)}...`,
+                Accept: "application/json",
+              },
+              body: JSON.stringify(translations, null, 2),
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to create translations for key: ${key}`, error);
+        }
+      } catch (error) {
+        console.error("Error saving missing translation key:", error);
+      }
+
+      return fallbackValue || key;
     },
   });
 

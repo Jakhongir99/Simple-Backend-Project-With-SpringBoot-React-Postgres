@@ -1,5 +1,6 @@
 package com.example.translation.service.impl;
 
+import com.example.translation.dto.BulkTranslationResult;
 import com.example.translation.dto.CreateTranslationRequest;
 import com.example.translation.dto.UpdateTranslationRequest;
 import com.example.translation.dto.TranslationDto;
@@ -52,7 +53,7 @@ public class TranslationServiceImpl implements TranslationService {
         Translation translation = translationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Translation not found with ID: " + id));
 
-        // Check if key and language combination conflicts with existing translations
+        // Validation simplified - translation key field is disabled in frontend
         if (request.getTranslationKey() != null && request.getLanguageCode() != null) {
             if (!request.getTranslationKey().equals(translation.getTranslationKey()) || 
                 !request.getLanguageCode().equals(translation.getLanguageCode())) {
@@ -128,6 +129,22 @@ public class TranslationServiceImpl implements TranslationService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<String, Map<String, TranslationDto>> getGroupedTranslationsByKey() {
+        List<Translation> translations = translationRepository.findByIsActiveTrue();
+        
+        // Group translations by key, then by language code
+        return translations.stream()
+                .collect(Collectors.groupingBy(
+                    Translation::getTranslationKey,
+                    Collectors.toMap(
+                        Translation::getLanguageCode,
+                        translationMapper::toDto
+                    )
+                ));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<TranslationDto> searchTranslations(String keyword) {
         return translationRepository.findBySearchTerm(keyword)
                 .stream()
@@ -176,20 +193,43 @@ public class TranslationServiceImpl implements TranslationService {
     }
 
     @Override
-    public void bulkCreateTranslations(List<CreateTranslationRequest> requests) {
+    public BulkTranslationResult bulkCreateTranslations(List<CreateTranslationRequest> requests) {
         log.info("Bulk creating {} translations", requests.size());
+        
+        int createdCount = 0;
+        int skippedCount = 0;
+        int errorCount = 0;
         
         for (CreateTranslationRequest request : requests) {
             try {
+                // Check if translation already exists
+                if (translationRepository.existsByTranslationKeyAndLanguageCode(request.getTranslationKey(), request.getLanguageCode())) {
+                    log.info("Translation already exists for key: {} and language: {}, skipping", 
+                        request.getTranslationKey(), request.getLanguageCode());
+                    skippedCount++;
+                    continue; // Skip existing translations instead of throwing error
+                }
+                
                 createTranslation(request);
+                createdCount++;
             } catch (Exception e) {
                 log.error("Error creating translation for key: {} and language: {}", 
                     request.getTranslationKey(), request.getLanguageCode(), e);
-                throw e;
+                errorCount++;
+                // Don't throw the exception, just log it and continue with other translations
+                continue;
             }
         }
         
-        log.info("Bulk translation creation completed");
+        BulkTranslationResult result = BulkTranslationResult.builder()
+            .totalRequested(requests.size())
+            .created(createdCount)
+            .skipped(skippedCount)
+            .errors(errorCount)
+            .build();
+            
+        log.info("Bulk translation creation completed: {}", result);
+        return result;
     }
 
     @Override

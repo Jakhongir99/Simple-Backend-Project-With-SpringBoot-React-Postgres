@@ -25,6 +25,8 @@ public interface FileService {
     
     Page<FileDto> getPublicFiles(Pageable pageable);
     
+    Page<FileDto> getAllFiles(Pageable pageable);
+    
     Page<FileDto> searchFiles(String keyword, Pageable pageable);
     
     Page<FileDto> getFilesByType(String fileType, Pageable pageable);

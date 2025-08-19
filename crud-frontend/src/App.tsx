@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 import { Layout } from "./components/Layout";
 import { AuthView } from "./components/AuthView";
-import { ProfileModal } from "./components/ProfileModal";
 import { UserManagement } from "./components/UserManagement";
 import { Dashboard } from "./components/Dashboard";
 import DepartmentManagement from "./components/DepartmentManagement";
@@ -13,6 +13,8 @@ import EmployeeManagement from "./components/EmployeeManagement";
 
 import TranslationManagement from "./components/TranslationManagement";
 import FileManagement from "./components/FileManagement";
+import { ThemeDemo } from "./components/ThemeDemo";
+import OAuthCallback from "./components/OAuthCallback";
 import {
   useAuth,
   useUsers,
@@ -21,6 +23,7 @@ import {
   useDeleteUser,
   useLogout,
 } from "./hooks";
+import { useQueryClient } from "@tanstack/react-query";
 import { checkAuthStatus } from "./utils/auth";
 import { useTheme } from "./contexts/ThemeContext";
 
@@ -36,6 +39,7 @@ interface User {
 }
 
 function App() {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User>({
     name: "",
     email: "",
@@ -81,7 +85,7 @@ function App() {
   const updateUserMutation = useUpdateUser();
   const deleteUserMutation = useDeleteUser();
   const logoutMutation = useLogout();
-
+  const queryClient = useQueryClient();
   useEffect(() => {
     if (
       token &&
@@ -162,13 +166,30 @@ function App() {
   };
 
   const logout = () => {
-    logoutMutation.mutate();
+    console.log("🔐 App: Logout initiated");
+
+    // Clear all queries and cache immediately
+    queryClient.clear();
+    queryClient.resetQueries();
+    queryClient.removeQueries();
+
+    // Clear local state
     setCurrentUser({ name: "", email: "", password: "", phone: "" });
     setIsEditing(false);
+
+    // Clear authentication state
+    authLogout();
+
+    console.log("🔐 App: Logout completed, redirecting to /auth");
+
+    // Force redirect to auth page and prevent back navigation
+    window.location.replace("/auth");
   };
 
   const handleNavigate = (view: string) => {
     setCurrentView(view);
+    // Navigate to the actual route
+    navigate(`/${view}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -211,76 +232,213 @@ function App() {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <Box bg="blue" c="white" p="xl">
-        <AuthView onSuccess={handleAuthSuccess} onError={(_msg) => {}} />
-      </Box>
-    );
-  }
-
-  // Show loading state while fetching user data
-  if (!currentUserData) {
-    return (
-      <Box p="xl" ta="center">
-        <Text size="lg" c="dimmed">
-          Loading user data...
-        </Text>
-      </Box>
-    );
-  }
-
   return (
-    <Layout
-      opened={opened}
-      setOpened={setOpened}
-      userProfile={userProfile}
-      onProfileClick={() => setProfileModalOpened(true)}
-      onLogout={logout}
-      onNavigate={handleNavigate}
-      currentPage={currentView}
-    >
-      {isAuthenticated && ( // Only render components when there's a token
-        <>
-          {currentView === "dashboard" && <Dashboard />}
-          {currentView === "users" && (
-            <UserManagement
-              users={usersData?.content || []}
-              currentUser={currentUser}
-              setCurrentUser={setCurrentUser}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
-              loading={usersLoading}
-              currentPage={currentPage}
-              totalPages={usersData?.totalPages || 1}
-              onSubmit={handleSubmit}
-              onEdit={editUser}
-              onDelete={deleteUser}
-              onRefresh={() => {}}
-              onPageChange={(page) => setCurrentPage(page)}
-            />
-          )}
-          {currentView === "departments" && <DepartmentManagement />}
-          {currentView === "jobs" && <JobManagement />}
-          {currentView === "employees" && <EmployeeManagement />}
+    <Routes>
+      {/* OAuth2 Callback Route - Always accessible */}
+      <Route path="/oauth-callback" element={<OAuthCallback />} />
 
-          {currentView === "translations" && <TranslationManagement />}
-          {currentView === "files" && <FileManagement />}
+      {/* Auth Route - When not authenticated */}
+      {!isAuthenticated ? (
+        <Route
+          path="/auth"
+          element={
+            <AuthView onSuccess={handleAuthSuccess} onError={(_msg) => {}} />
+          }
+        />
+      ) : (
+        /* Protected Routes - When authenticated */
+        <>
+          <Route
+            path="/dashboard"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="dashboard"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <Dashboard />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="users"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <UserManagement
+                  users={usersData?.content || []}
+                  currentUser={currentUser}
+                  setCurrentUser={setCurrentUser}
+                  isEditing={isEditing}
+                  setIsEditing={setIsEditing}
+                  loading={usersLoading}
+                  currentPage={currentPage}
+                  totalPages={usersData?.totalPages || 1}
+                  onSubmit={handleSubmit}
+                  onEdit={editUser}
+                  onDelete={deleteUser}
+                  onRefresh={() => {}}
+                  onPageChange={(page) => setCurrentPage(page)}
+                />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/departments"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="departments"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <DepartmentManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/jobs"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="jobs"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <JobManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/employees"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="employees"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <EmployeeManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/translations"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="translations"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <TranslationManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/files"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="files"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <FileManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/theme-demo"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="theme-demo"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <ThemeDemo />
+              </Layout>
+            }
+          />
+
+          {/* Default redirect for authenticated users */}
+          <Route
+            path="*"
+            element={
+              isAuthenticated && token && token.length > 0 ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
         </>
       )}
 
-      {/* Profile Modal */}
-      <ProfileModal
-        opened={profileModalOpened}
-        onClose={() => setProfileModalOpened(false)}
-        userProfile={userProfile}
-        setUserProfile={setUserProfile}
-        onSave={() => {
-          setProfileModalOpened(false);
-        }}
-        onRefresh={() => {}}
-      />
-    </Layout>
+      {/* Default redirect for unauthenticated users */}
+      <Route path="*" element={<Navigate to="/auth" replace />} />
+    </Routes>
   );
 }
 

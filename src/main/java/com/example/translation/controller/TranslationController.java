@@ -1,5 +1,6 @@
 package com.example.translation.controller;
 
+import com.example.translation.dto.BulkTranslationResult;
 import com.example.translation.dto.CreateTranslationRequest;
 import com.example.translation.dto.UpdateTranslationRequest;
 import com.example.translation.dto.TranslationDto;
@@ -8,13 +9,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/translations")
@@ -26,13 +29,23 @@ public class TranslationController {
     private final TranslationService translationService;
 
     @GetMapping
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<TranslationDto>> getAllTranslations() {
         try {
             List<TranslationDto> translations = translationService.getAllActiveTranslations();
             return ResponseEntity.ok(translations);
         } catch (Exception e) {
             log.error("Error getting all translations: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/grouped")
+    public ResponseEntity<Map<String, Map<String, TranslationDto>>> getGroupedTranslations() {
+        try {
+            Map<String, Map<String, TranslationDto>> groupedTranslations = translationService.getGroupedTranslationsByKey();
+            return ResponseEntity.ok(groupedTranslations);
+        } catch (Exception e) {
+            log.error("Error getting grouped translations: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -60,7 +73,6 @@ public class TranslationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TranslationDto> getTranslationById(@PathVariable Long id) {
         try {
             Optional<TranslationDto> translation = translationService.getTranslationById(id);
@@ -87,7 +99,6 @@ public class TranslationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TranslationDto> createTranslation(@Valid @RequestBody CreateTranslationRequest request) {
         try {
             TranslationDto createdTranslation = translationService.createTranslation(request);
@@ -99,11 +110,25 @@ public class TranslationController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<TranslationDto> updateTranslation(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateTranslationRequest request) {
+            @Valid @RequestBody UpdateTranslationRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            log.info("🔧 Updating translation with ID: {}, request: {}", id, request);
+            log.info("🔧 Authorization header: {}", authHeader != null ? "present" : "absent");
+            
+            // Debug authentication details
+            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            log.info("🔧 Current authentication: {}", auth);
+            if (auth != null) {
+                log.info("🔧 User: {}, Authorities: {}", auth.getName(), auth.getAuthorities());
+                log.info("🔧 Has ROLE_USER: {}", auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+                log.info("🔧 Has ROLE_ADMIN: {}", auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+            } else {
+                log.warn("🔧 No authentication found in SecurityContext!");
+            }
+            
             TranslationDto updatedTranslation = translationService.updateTranslation(id, request);
             return ResponseEntity.ok(updatedTranslation);
         } catch (Exception e) {
@@ -113,7 +138,6 @@ public class TranslationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteTranslation(@PathVariable Long id) {
         try {
             translationService.deleteTranslation(id);
@@ -125,7 +149,6 @@ public class TranslationController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<TranslationDto>> searchTranslations(@RequestParam String keyword) {
         try {
             List<TranslationDto> translations = translationService.searchTranslations(keyword);
@@ -137,7 +160,6 @@ public class TranslationController {
     }
 
     @GetMapping("/search/language/{languageCode}")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<TranslationDto>> searchTranslationsByLanguage(
             @PathVariable String languageCode,
             @RequestParam String keyword) {
@@ -151,7 +173,6 @@ public class TranslationController {
     }
 
     @GetMapping("/keys")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<String>> getAllTranslationKeys() {
         try {
             List<String> keys = translationService.getAllActiveTranslationKeys();
@@ -173,6 +194,54 @@ public class TranslationController {
         }
     }
 
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Translation API is working!");
+    }
+
+    @GetMapping("/debug/auth")
+    public ResponseEntity<Map<String, Object>> debugAuthentication() {
+        try {
+            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Map<String, Object> debugInfo = new HashMap<>();
+            debugInfo.put("authenticated", auth != null && auth.isAuthenticated());
+            debugInfo.put("principal", auth != null ? auth.getPrincipal() : null);
+            debugInfo.put("authorities", auth != null ? auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toList()) : null);
+            debugInfo.put("details", auth != null ? auth.getDetails() : null);
+            debugInfo.put("requestURI", "debug endpoint called");
+            
+            log.info("🔍 Debug auth info: {}", debugInfo);
+            return ResponseEntity.ok(debugInfo);
+        } catch (Exception e) {
+            log.error("Error getting auth debug info: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/debug/user")
+    public ResponseEntity<Map<String, Object>> debugCurrentUser() {
+        try {
+            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Map<String, Object> debugInfo = new HashMap<>();
+            
+            if (auth != null && auth.isAuthenticated()) {
+                debugInfo.put("username", auth.getName());
+                debugInfo.put("authorities", auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toList()));
+                debugInfo.put("hasRoleUser", auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+                debugInfo.put("hasRoleAdmin", auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+                debugInfo.put("canUpdate", auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER") || a.getAuthority().equals("ROLE_ADMIN")));
+            } else {
+                debugInfo.put("authenticated", false);
+            }
+            
+            log.info("🔍 Debug user info: {}", debugInfo);
+            return ResponseEntity.ok(debugInfo);
+        } catch (Exception e) {
+            log.error("Error getting user debug info: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/exists/key/{translationKey}/language/{languageCode}")
     public ResponseEntity<Boolean> checkTranslationExists(
             @PathVariable String translationKey,
@@ -187,11 +256,16 @@ public class TranslationController {
     }
 
     @PostMapping("/bulk")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> bulkCreateTranslations(@Valid @RequestBody List<CreateTranslationRequest> requests) {
+    public ResponseEntity<BulkTranslationResult> bulkCreateTranslations(@Valid @RequestBody List<CreateTranslationRequest> requests) {
         try {
-            translationService.bulkCreateTranslations(requests);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            BulkTranslationResult result = translationService.bulkCreateTranslations(requests);
+            
+            // Return 201 Created if new translations were created, 200 OK if all were skipped
+            if (result.hasNewTranslations()) {
+                return ResponseEntity.status(HttpStatus.CREATED).body(result);
+            } else {
+                return ResponseEntity.ok(result);
+            }
         } catch (Exception e) {
             log.error("Error bulk creating translations: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -199,7 +273,6 @@ public class TranslationController {
     }
 
     @PutMapping("/bulk")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> bulkUpdateTranslations(@RequestBody Map<Long, UpdateTranslationRequest> updates) {
         try {
             translationService.bulkUpdateTranslations(updates);

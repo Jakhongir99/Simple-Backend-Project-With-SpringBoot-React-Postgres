@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Text, Group, Stack, Badge, Button } from "@mantine/core";
+import { Card, Text, Group, Stack, Badge, Button, Flex } from "@mantine/core";
 import {
   IconUsers,
   IconBuilding,
@@ -63,11 +63,18 @@ export const Dashboard: React.FC = () => {
         Current theme: {theme} | Language: {t("language.english")}
       </Text>
 
-      <Group gap="md" justify="center">
+      <Flex gap="md" wrap="wrap" justify="space-between">
         {stats.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
-            <Card key={index} shadow="sm" padding="lg" radius="md" withBorder>
+            <Card
+              key={index}
+              shadow="sm"
+              padding="lg"
+              radius="lg"
+              withBorder
+              bg="var(--bg-navbar)"
+            >
               <Group justify="space-between" mb="xs">
                 <Text fw={500} size="lg">
                   {stat.title}
@@ -76,7 +83,6 @@ export const Dashboard: React.FC = () => {
                   {stat.value}
                 </Badge>
               </Group>
-
               <Group justify="space-between" align="flex-end" gap="xs">
                 <Stack gap={0}>
                   <Text size="xl" fw={700} color={stat.color}>
@@ -91,30 +97,7 @@ export const Dashboard: React.FC = () => {
             </Card>
           );
         })}
-      </Group>
-
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <Stack gap="md">
-          <Text size="lg" fw={600}>
-            Welcome to the CRUD Dashboard
-          </Text>
-          <Text size="sm" c="dimmed">
-            This dashboard demonstrates the theme switching and
-            internationalization features. You can switch between light and dark
-            themes using the theme toggle button, and change languages using the
-            language selector in the header.
-          </Text>
-          <Group>
-            <Button variant="filled" color="blue">
-              {t("common.create")}
-            </Button>
-            <Button variant="outline">{t("common.edit")}</Button>
-            <Button variant="light" color="red">
-              {t("common.delete")}
-            </Button>
-          </Group>
-        </Stack>
-      </Card>
+      </Flex>
     </Stack>
   );
 };

@@ -46,4 +46,8 @@ public interface FileRepository extends JpaRepository<FileEntity, Long> {
     // Find recent files
     @Query("SELECT f FROM FileEntity f WHERE f.isActive = true ORDER BY f.createdAt DESC")
     List<FileEntity> findRecentFiles(Pageable pageable);
+    
+    // Find all active files
+    @Query("SELECT f FROM FileEntity f WHERE f.isActive = true")
+    Page<FileEntity> findByIsActiveTrue(Pageable pageable);
 }

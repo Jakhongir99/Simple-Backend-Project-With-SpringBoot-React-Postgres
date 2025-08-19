@@ -25,7 +25,7 @@ interface ProfileModalProps {
   onClose: () => void;
   userProfile: UserProfile;
   setUserProfile: (profile: UserProfile) => void;
-  onSave: () => void;
+  onSave?: () => void;
   onRefresh?: () => void;
 }
 
@@ -43,7 +43,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       onClose={onClose}
       title="Profile Settings"
       size="lg"
-      radius="lg"
+      radius="xl"
+      centered
+      styles={{
+        title: { color: `var(--text-primary)` },
+        header: {
+          backgroundColor: `var(--bg-navbar)`,
+          borderBottom: `1px solid var(--border-color)`,
+        },
+        body: { backgroundColor: `var(--bg-navbar)` },
+      }}
     >
       <Stack gap="lg">
         <TextInput
@@ -54,6 +63,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           }
           leftSection={<IconUser size={16} />}
           placeholder="Enter your full name"
+          radius="xl"
         />
         <TextInput
           label="Email"
@@ -63,6 +73,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           }
           leftSection={<IconMail size={16} />}
           placeholder="Enter your email"
+          radius="xl"
         />
         <TextInput
           label="Phone"
@@ -72,6 +83,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           }
           leftSection={<IconUser size={16} />}
           placeholder="Enter your phone number"
+          radius="xl"
         />
         <Textarea
           label="Bio"
@@ -81,6 +93,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           }
           placeholder="Tell us about yourself..."
           rows={3}
+          radius="xl"
         />
         <Select
           label="Role"
@@ -89,6 +102,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             setUserProfile({ ...userProfile, role: value || "User" })
           }
           data={["User", "Admin", "Moderator"]}
+          radius="xl"
         />
         <Switch
           label="Enable Notifications"
@@ -102,10 +116,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         />
 
         <Group justify="flex-end" gap="md">
-          <Button variant="light" onClick={onClose}>
+          <Button variant="light" onClick={onClose} radius="xl">
             Cancel
           </Button>
-          <Button onClick={onSave}>Save Changes</Button>
+          <Button onClick={onSave} radius="xl">
+            Save Changes
+          </Button>
         </Group>
       </Stack>
     </Modal>

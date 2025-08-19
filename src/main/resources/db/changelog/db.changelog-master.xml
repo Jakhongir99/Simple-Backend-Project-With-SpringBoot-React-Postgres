@@ -14,5 +14,6 @@
     <include file="db/changelog/changes/006-remove-flyway-schema-history.xml"/>
     <include file="db/changelog/changes/008-create-translations-table.xml"/>
     <include file="db/changelog/changes/009-create-files-table.xml"/>
+    <include file="db/changelog/changes/010-add-oauth2-fields.xml"/>
 
 </databaseChangeLog>

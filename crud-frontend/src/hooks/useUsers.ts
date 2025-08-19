@@ -39,10 +39,27 @@ export const useUsers = (
   size: number = 10,
   enabled: boolean = true
 ) => {
+  // Check if there's a token in localStorage
+  const hasToken =
+    typeof window !== "undefined" && localStorage.getItem("token");
+  // Only enable if we're on the users page AND have a token
+  const isOnUsersPage =
+    typeof window !== "undefined" && window.location.pathname === "/users";
+  const shouldEnable = enabled && !!hasToken && isOnUsersPage;
+
+  console.log("👥 useUsers: Hook called", {
+    page,
+    size,
+    enabled,
+    hasToken: !!hasToken,
+    isOnUsersPage,
+    willMakeAPICall: shouldEnable,
+  });
+
   return useQuery({
     queryKey: ["users", page, size],
     queryFn: () => usersAPI.getUsers(page, size),
-    enabled: enabled, // Only run query when enabled
+    enabled: shouldEnable, // Only run query when enabled AND token exists
     staleTime: 2 * 60 * 1000, // 2 minutes
     // keepPreviousData: true, // Keep previous data while fetching new data
   });

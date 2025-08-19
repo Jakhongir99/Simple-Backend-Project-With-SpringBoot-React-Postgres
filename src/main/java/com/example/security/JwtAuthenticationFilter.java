@@ -31,8 +31,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String requestURI = request.getRequestURI();
+        
+        // Skip JWT processing only for truly public endpoints
+        if (isPublicEndpoint(requestURI)) {
+            log.info("=== JWT FILTER SKIPPED for public endpoint: {} ===", requestURI);
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         log.info("=== JWT FILTER PROCESSING ===");
-        log.info("Request URI: {}", request.getRequestURI());
+        log.info("Request URI: {}", requestURI);
         log.info("Authorization header: {}", header != null ? "present" : "absent");
         
         if (header != null && header.startsWith("Bearer ")) {
@@ -56,6 +65,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     log.info("✅ Authentication SUCCESSFULLY set for user: {} with authorities: {}", 
                              username, userDetails.getAuthorities());
                     log.info("Security context authentication: {}", SecurityContextHolder.getContext().getAuthentication());
+                    log.info("User role: {}", userDetails.getAuthorities().stream()
+                            .map(authority -> authority.getAuthority())
+                            .findFirst()
+                            .orElse("NO_ROLE"));
                 } else {
                     log.info("❌ Authentication NOT set - username: {}, existing auth: {}", 
                              username, SecurityContextHolder.getContext().getAuthentication() != null);
@@ -77,6 +90,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         log.info("=== JWT FILTER COMPLETED ===");
         filterChain.doFilter(request, response);
+    }
+    
+    private boolean isPublicEndpoint(String requestURI) {
+        // Public endpoints that don't need JWT authentication
+        return requestURI.startsWith("/api/auth/login") ||
+               requestURI.startsWith("/api/auth/register") ||
+               requestURI.startsWith("/api/auth/logout") ||
+               requestURI.startsWith("/api/auth/debug-token") ||
+               requestURI.startsWith("/api/auth/oauth2/") ||
+               requestURI.startsWith("/swagger-ui/") ||
+               requestURI.startsWith("/v2/api-docs") ||
+               requestURI.startsWith("/v3/api-docs");
     }
 }
 

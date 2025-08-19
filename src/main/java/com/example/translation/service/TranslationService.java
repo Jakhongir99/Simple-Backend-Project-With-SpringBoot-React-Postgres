@@ -1,5 +1,6 @@
 package com.example.translation.service;
 
+import com.example.translation.dto.BulkTranslationResult;
 import com.example.translation.dto.CreateTranslationRequest;
 import com.example.translation.dto.UpdateTranslationRequest;
 import com.example.translation.dto.TranslationDto;
@@ -24,6 +25,8 @@ public interface TranslationService {
     
     List<TranslationDto> getAllActiveTranslations();
     
+    Map<String, Map<String, TranslationDto>> getGroupedTranslationsByKey();
+    
     List<TranslationDto> searchTranslations(String keyword);
     
     List<TranslationDto> searchTranslationsByLanguage(String languageCode, String keyword);
@@ -36,7 +39,7 @@ public interface TranslationService {
     
     boolean existsByKeyAndLanguage(String translationKey, String languageCode);
     
-    void bulkCreateTranslations(List<CreateTranslationRequest> requests);
+    BulkTranslationResult bulkCreateTranslations(List<CreateTranslationRequest> requests);
     
     void bulkUpdateTranslations(Map<Long, UpdateTranslationRequest> updates);
 }

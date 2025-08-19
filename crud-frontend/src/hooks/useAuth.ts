@@ -31,7 +31,10 @@ export const useAuth = () => {
     typeof window !== "undefined" ? localStorage.getItem("token") : null
   );
 
-  const { data: currentUser } = useCurrentUser(token);
+  const { data: currentUser } = useCurrentUser(
+    token && token.length > 0 ? token : null
+  );
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Listen for storage changes (e.g., when token is set/removed in another tab)
@@ -45,8 +48,19 @@ export const useAuth = () => {
   }, []);
 
   const login = (newToken: string) => {
+    console.log("🔐 useAuth: Login function called", {
+      hasToken: !!newToken,
+      tokenLength: newToken?.length,
+    });
+
     localStorage.setItem("token", newToken);
     setToken(newToken);
+
+    console.log("🔐 useAuth: Token state updated", {
+      localStorageToken: localStorage.getItem("token"),
+      stateToken: newToken,
+    });
+
     // Trigger a storage event to sync across tabs
     window.dispatchEvent(
       new StorageEvent("storage", { key: "token", newValue: newToken })
@@ -54,14 +68,27 @@ export const useAuth = () => {
   };
 
   const logout = () => {
+    console.log("🔐 useAuth: Logout initiated");
+
     localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
     setToken(null);
+
+    // Clear all queries when logging out
+    queryClient.clear();
+    queryClient.resetQueries();
+    queryClient.removeQueries();
+
+    console.log("🔐 useAuth: Logout completed, reloading page");
+
+    // Force a page reload to clear all state
+    window.location.reload();
   };
 
   return {
     token,
     user: currentUser,
-    isAuthenticated: !!token,
+    isAuthenticated: !!token && token.length > 0,
     login,
     logout,
   };
@@ -135,8 +162,10 @@ export const useLogout = () => {
       // Remove token
       localStorage.removeItem("token");
 
-      // Clear all queries
+      // Clear all queries and reset cache
       queryClient.clear();
+      queryClient.resetQueries();
+      queryClient.removeQueries();
 
       notifications.show({
         title: "Success",
@@ -155,10 +184,16 @@ export const useLogout = () => {
 };
 
 export const useCurrentUser = (token: string | null) => {
+  console.log("🔐 useCurrentUser: Hook called", {
+    hasToken: !!token,
+    tokenLength: token?.length,
+    enabled: !!token,
+  });
+
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: authAPI.getCurrentUser,
-    enabled: !!token,
+    enabled: !!token && token.length > 0, // Only enable if token exists and is not empty
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: any) => {
       // Don't retry on 401/403 errors

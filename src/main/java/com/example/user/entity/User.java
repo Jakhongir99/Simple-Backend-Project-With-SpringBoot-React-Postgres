@@ -30,15 +30,27 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String phone;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
+
+    @Column(name = "oauth2_provider")
+    private String oauth2Provider;
+
+    @Column(name = "oauth2_provider_id")
+    private String oauth2ProviderId;
+
+    @Column(name = "profile_picture")
+    private String profilePicture;
+
+    @Column(name = "email_verified")
+    private Boolean emailVerified = false;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

@@ -41,10 +41,19 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/login", "/api/auth/register").permitAll()
                 .antMatchers("/api/auth/logout").permitAll()
                 .antMatchers("/api/auth/debug-token").permitAll()
+                .antMatchers("/api/auth/oauth2/**").permitAll()
                 .antMatchers("/api/auth/me").authenticated()
                 .antMatchers(HttpMethod.GET, "/api/users/**").authenticated()
-                // Translation endpoints - allow public access for i18n
-                .antMatchers(HttpMethod.GET, "/api/translations/**").permitAll()
+                // Translation endpoints - allow public access for all operations
+                .antMatchers("/api/translations/**").permitAll()
+                .antMatchers("/api/translations/debug/**").permitAll() // Debug endpoint
+                .antMatchers("/api/translations/test").permitAll() // Test endpoint
+                // File endpoints - allow public access for viewing files
+                .antMatchers(HttpMethod.GET, "/api/files/public/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/files/all/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/files/search").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/files/type/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/files/recent").permitAll()
                 // Swagger UI endpoints
                 .antMatchers("/swagger-ui/**", "/swagger-ui.html", "/v2/api-docs", "/swagger-resources/**", "/webjars/**", "/v3/api-docs/**").permitAll()
                 // Static resources and error pages

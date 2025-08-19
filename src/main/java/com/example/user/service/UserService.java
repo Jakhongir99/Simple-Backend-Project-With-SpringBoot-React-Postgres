@@ -36,4 +36,15 @@ public interface UserService {
     boolean existsByName(String name);
     
     User getCurrentUser();
+    
+    /**
+     * Find or create user by OAuth2 provider information
+     * @param email User's email
+     * @param name User's name
+     * @param oauth2Provider OAuth2 provider (e.g., "google", "github")
+     * @param oauth2ProviderId Provider-specific user ID
+     * @param profilePicture User's profile picture URL
+     * @return User entity
+     */
+    User findOrCreateOAuth2User(String email, String name, String oauth2Provider, String oauth2ProviderId, String profilePicture);
 }

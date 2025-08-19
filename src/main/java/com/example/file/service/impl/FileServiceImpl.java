@@ -136,6 +136,12 @@ public class FileServiceImpl implements FileService {
     }
     
     @Override
+    public Page<FileDto> getAllFiles(Pageable pageable) {
+        Page<FileEntity> files = fileRepository.findByIsActiveTrue(pageable);
+        return files.map(fileMapper::toDto);
+    }
+    
+    @Override
     public Page<FileDto> searchFiles(String keyword, Pageable pageable) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getPublicFiles(pageable);

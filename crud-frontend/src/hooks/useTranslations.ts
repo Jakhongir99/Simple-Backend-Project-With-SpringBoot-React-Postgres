@@ -2,7 +2,8 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { notifications } from "@mantine/notifications";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 // Types for translation data
 export interface Translation {
@@ -38,83 +39,113 @@ export const useTranslations = () => {
   const queryClient = useQueryClient();
 
   // Memoize the current language to prevent unnecessary re-renders
-  const currentLanguage = useMemo(() => i18n.language, [i18n.language]);
+  const currentLanguage = useMemo(() => {
+    console.log(
+      `[useTranslations] Current language changed to: ${i18n.language}`
+    );
+    return i18n.language;
+  }, [i18n.language]);
+
+  // Monitor language changes
+  useEffect(() => {
+    console.log(
+      `[useTranslations] Language effect triggered: ${currentLanguage}`
+    );
+  }, [currentLanguage]);
 
   // Get translations for current language - with better caching
   const { data: translations, isLoading: translationsLoading } = useQuery({
     queryKey: ["translations", currentLanguage],
     queryFn: async () => {
-      // Check if i18next already has the translations loaded
-      if (i18n.hasResourceBundle(currentLanguage, "translation")) {
-        console.log(
-          `[useTranslations] Language ${currentLanguage} already loaded in i18next, using cached data`
-        );
-        return i18n.getResourceBundle(currentLanguage, "translation");
-      }
-
       console.log(
         `[useTranslations] Fetching translations for language: ${currentLanguage}`
       );
-      const response = await axios.get(
-        `/api/translations/language/${currentLanguage}/map`
-      );
-      console.log(
-        `[useTranslations] Translations fetched successfully for: ${currentLanguage}`
-      );
 
-      // Also add the translations to i18next to prevent duplicate API calls
-      i18n.addResourceBundle(
-        currentLanguage,
-        "translation",
-        response.data,
-        true,
-        true
-      );
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/api/translations/language/${currentLanguage}/map`
+        );
+        console.log(
+          `[useTranslations] Translations fetched successfully for: ${currentLanguage}`,
+          response.data
+        );
 
-      return response.data;
+        // Also add the translations to i18next to prevent duplicate API calls
+        i18n.addResourceBundle(
+          currentLanguage,
+          "translation",
+          response.data,
+          true,
+          true
+        );
+
+        return response.data;
+      } catch (error) {
+        console.error(
+          `[useTranslations] Error fetching translations for ${currentLanguage}:`,
+          error
+        );
+        throw error;
+      }
     },
     enabled: !!currentLanguage,
-    staleTime: 10 * 60 * 1000, // 10 minutes - increased from 5
-    gcTime: 30 * 60 * 1000, // 30 minutes - increased from 10
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduced to ensure fresh data
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false, // Prevent refetch on window focus
-    refetchOnMount: false, // Only refetch if data is stale
+    refetchOnMount: true, // Always refetch when component mounts
   });
 
-  // Get all translations (admin only) - with better caching
-  const { data: allTranslations, isLoading: allTranslationsLoading } = useQuery(
-    {
-      queryKey: ["all-translations"],
-      queryFn: async () => {
-        const response = await axios.get("/api/translations");
-        return response.data;
-      },
-      enabled: false, // Only fetch when needed
-      staleTime: 15 * 60 * 1000, // 15 minutes
-      gcTime: 60 * 60 * 1000, // 1 hour
-    }
-  );
+  // Get current location to conditionally enable queries
+  const location = useLocation();
+  const isTranslationsPage = location.pathname === "/translations";
 
-  // Get available languages - with better caching
-  const { data: availableLanguages, isLoading: languagesLoading } = useQuery({
-    queryKey: ["available-languages"],
+  // Get grouped translations by key for table display - only when on translations page
+  const {
+    data: groupedTranslations,
+    isLoading: groupedTranslationsLoading,
+    error: groupedTranslationsError,
+  } = useQuery({
+    queryKey: ["grouped-translations"],
     queryFn: async () => {
-      const response = await axios.get("/api/translations/languages");
-      return response.data;
+      console.log(
+        "🔤 [useTranslations] Fetching grouped translations from API"
+      );
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/api/translations/grouped"
+        );
+        console.log(
+          "🔤 [useTranslations] Grouped translations fetched:",
+          response.data
+        );
+        return response.data;
+      } catch (error) {
+        console.error(
+          "🔤 [useTranslations] Error fetching grouped translations:",
+          error
+        );
+        throw error;
+      }
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes - increased from 10
+    enabled: isTranslationsPage, // Only fetch when on translations page
+    staleTime: 15 * 60 * 1000, // 15 minutes
     gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   // Memoize the create translation mutation
   const createTranslationMutation = useMutation({
     mutationFn: async (data: CreateTranslationRequest) => {
-      const response = await axios.post("/api/translations", data);
+      const response = await axios.post(
+        "http://localhost:8080/api/translations",
+        data
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      // Only invalidate specific queries, not all translations
-      queryClient.invalidateQueries({ queryKey: ["all-translations"] });
+      // Invalidate translation queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["grouped-translations"] });
       // Invalidate the specific language translations
       queryClient.invalidateQueries({
         queryKey: ["translations", variables.languageCode],
@@ -144,12 +175,15 @@ export const useTranslations = () => {
       id: number;
       data: UpdateTranslationRequest;
     }) => {
-      const response = await axios.put(`/api/translations/${id}`, data);
+      const response = await axios.put(
+        `http://localhost:8080/api/translations/${id}`,
+        data
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      // Only invalidate specific queries
-      queryClient.invalidateQueries({ queryKey: ["all-translations"] });
+      // Invalidate translation queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["grouped-translations"] });
       // Invalidate the specific language translations if language changed
       if (variables.data.languageCode) {
         queryClient.invalidateQueries({
@@ -175,11 +209,11 @@ export const useTranslations = () => {
   // Memoize the delete translation mutation
   const deleteTranslationMutation = useMutation({
     mutationFn: async (id: number) => {
-      await axios.delete(`/api/translations/${id}`);
+      await axios.delete(`http://localhost:8080/api/translations/${id}`);
     },
     onSuccess: () => {
-      // Only invalidate specific queries
-      queryClient.invalidateQueries({ queryKey: ["all-translations"] });
+      // Invalidate translation queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["grouped-translations"] });
       // Invalidate current language translations
       queryClient.invalidateQueries({
         queryKey: ["translations", currentLanguage],
@@ -204,7 +238,9 @@ export const useTranslations = () => {
   const searchTranslations = useCallback(async (keyword: string) => {
     try {
       const response = await axios.get(
-        `/api/translations/search?keyword=${encodeURIComponent(keyword)}`
+        `http://localhost:8080/api/translations/search?keyword=${encodeURIComponent(
+          keyword
+        )}`
       );
       return response.data;
     } catch (error) {
@@ -244,24 +280,23 @@ export const useTranslations = () => {
             `[useTranslations] Changing language from ${i18n.language} to ${language}`
           );
 
-          // Check if the new language is already loaded in i18next
-          if (i18n.hasResourceBundle(language, "translation")) {
-            console.log(
-              `[useTranslations] Language ${language} already loaded in i18next, no API call needed`
-            );
-            await i18n.changeLanguage(language);
-            // No need to invalidate queries since data is already available
-            return;
-          }
-
-          // Language not loaded, change it and let i18next handle the loading
+          // Always change the language first
           await i18n.changeLanguage(language);
-          // Only invalidate the specific language query if we need to fetch it
+
+          // Always invalidate the language-specific query to force a fresh API call
           queryClient.invalidateQueries({
             queryKey: ["translations", language],
           });
+
+          // Also invalidate grouped translations to refresh the table (only if on translations page)
+          if (location.pathname === "/translations") {
+            queryClient.invalidateQueries({
+              queryKey: ["grouped-translations"],
+            });
+          }
+
           console.log(
-            `[useTranslations] Language changed successfully to ${language}`
+            `[useTranslations] Language changed successfully to ${language} and queries invalidated`
           );
         } else {
           console.log(
@@ -272,7 +307,7 @@ export const useTranslations = () => {
         console.error("Error changing language:", error);
       }
     },
-    [i18n, queryClient]
+    [i18n, queryClient, location.pathname]
   );
 
   // Memoize the return value to prevent unnecessary re-renders
@@ -285,15 +320,14 @@ export const useTranslations = () => {
       // Language management
       currentLanguage,
       changeLanguage,
-      supportedLanguages: availableLanguages || ["en", "ru", "uz"],
+      supportedLanguages: ["en", "ru", "uz"],
 
       // Data
       translations,
-      allTranslations,
+      groupedTranslations,
       translationsLoading,
-      allTranslationsLoading,
-      availableLanguages,
-      languagesLoading,
+      groupedTranslationsLoading,
+      groupedTranslationsError,
 
       // Mutations
       createTranslation: createTranslationMutation.mutate,
@@ -312,12 +346,11 @@ export const useTranslations = () => {
       translate,
       currentLanguage,
       changeLanguage,
-      availableLanguages,
       translations,
-      allTranslations,
+      groupedTranslations,
       translationsLoading,
-      allTranslationsLoading,
-      languagesLoading,
+      groupedTranslationsLoading,
+      groupedTranslationsError,
       createTranslationMutation.mutate,
       updateTranslationMutation.mutate,
       deleteTranslationMutation.mutate,

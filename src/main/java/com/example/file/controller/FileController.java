@@ -137,6 +137,22 @@ public class FileController {
         return ResponseEntity.ok(files);
     }
     
+    @GetMapping("/all")
+    public ResponseEntity<Page<FileDto>> getAllFiles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<FileDto> files = fileService.getAllFiles(pageable);
+        
+        return ResponseEntity.ok(files);
+    }
+    
     @GetMapping("/search")
     public ResponseEntity<Page<FileDto>> searchFiles(
             @RequestParam(required = false) String keyword,

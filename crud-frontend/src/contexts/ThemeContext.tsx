@@ -12,6 +12,8 @@ interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  isDark: boolean;
+  isLight: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -51,6 +53,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.classList.add("light");
       root.classList.remove("dark");
     }
+
+    // Update meta theme-color for mobile browsers
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute(
+        "content",
+        theme === "dark" ? "#141517" : "#ffffff"
+      );
+    }
+
+    // Log theme change for debugging
+    console.log(`🎨 Theme changed to: ${theme}`);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -65,6 +79,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     theme,
     toggleTheme,
     setTheme,
+    isDark: theme === "dark",
+    isLight: theme === "light",
   };
 
   return (

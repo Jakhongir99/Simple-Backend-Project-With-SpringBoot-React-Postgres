@@ -14,7 +14,6 @@ import {
   Title,
   Badge,
   Stack,
-  Pagination,
   TextInput as SearchInput,
 } from "@mantine/core";
 import {
@@ -38,8 +37,9 @@ const TranslationManagement: React.FC = () => {
     currentLanguage,
     changeLanguage,
     supportedLanguages,
-    allTranslations,
-    allTranslationsLoading,
+    groupedTranslations,
+    groupedTranslationsLoading,
+    groupedTranslationsError,
     createTranslation,
     updateTranslation,
     deleteTranslation,
@@ -56,24 +56,39 @@ const TranslationManagement: React.FC = () => {
     useState<Translation | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Translation[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
 
-  // Form states
-  const [formData, setFormData] = useState<CreateTranslationRequest>({
+  // Form states for multi-language translation
+  const [formData, setFormData] = useState({
     translationKey: "",
-    languageCode: "en",
-    translationValue: "",
+    ru: "",
+    en: "",
+    uz: "",
     description: "",
     isActive: true,
   });
 
-  // Load all translations when component mounts
+  // Load grouped translations when component mounts
   useEffect(() => {
-    if (allTranslations) {
-      setSearchResults(allTranslations);
+    console.log(
+      "🔤 TranslationManagement: groupedTranslations changed:",
+      groupedTranslations
+    );
+    if (groupedTranslations) {
+      // Convert grouped translations to flat list for search
+      const flatTranslations = Object.entries(groupedTranslations).flatMap(
+        ([key, langMap]) =>
+          Object.values(langMap as Record<string, Translation>)
+      );
+      setSearchResults(flatTranslations);
+      console.log(
+        "🔤 TranslationManagement: Search results updated with",
+        flatTranslations.length,
+        "translations from",
+        Object.keys(groupedTranslations).length,
+        "keys"
+      );
     }
-  }, [allTranslations]);
+  }, [groupedTranslations]);
 
   // Handle search
   const handleSearch = async () => {
@@ -81,49 +96,186 @@ const TranslationManagement: React.FC = () => {
       const results = await searchTranslations(searchKeyword);
       setSearchResults(results);
     } else {
-      setSearchResults(allTranslations || []);
+      // Convert grouped translations to flat list for search
+      if (groupedTranslations) {
+        const flatTranslations = Object.entries(groupedTranslations).flatMap(
+          ([key, langMap]) =>
+            Object.values(langMap as Record<string, Translation>)
+        );
+        setSearchResults(flatTranslations);
+      } else {
+        setSearchResults([]);
+      }
     }
-    setCurrentPage(1);
   };
 
-  // Handle create translation
+  // Handle create translation for all languages
   const handleCreate = () => {
-    createTranslation(formData, {
-      onSuccess: () => {
+    const translations = [];
+
+    // Create translation for Russian if provided
+    if (formData.ru.trim()) {
+      translations.push({
+        translationKey: formData.translationKey,
+        languageCode: "ru",
+        translationValue: formData.ru.trim(),
+        description: formData.description,
+        isActive: formData.isActive,
+      });
+    }
+
+    // Create translation for English if provided
+    if (formData.en.trim()) {
+      translations.push({
+        translationKey: formData.translationKey,
+        languageCode: "en",
+        translationValue: formData.en.trim(),
+        description: formData.description,
+        isActive: formData.isActive,
+      });
+    }
+
+    // Create translation for Uzbek if provided
+    if (formData.uz.trim()) {
+      translations.push({
+        translationKey: formData.translationKey,
+        languageCode: "uz",
+        translationValue: formData.uz.trim(),
+        description: formData.description,
+        isActive: formData.isActive,
+      });
+    }
+
+    // Create all translations
+    Promise.all(
+      translations.map((translation) => createTranslation(translation))
+    )
+      .then(() => {
         setCreateModalOpened(false);
         setFormData({
           translationKey: "",
-          languageCode: "en",
-          translationValue: "",
+          ru: "",
+          en: "",
+          uz: "",
           description: "",
           isActive: true,
         });
-      },
-    });
+      })
+      .catch((error) => {
+        console.error("Error creating translations:", error);
+      });
   };
 
-  // Handle edit translation
+  // Handle edit translation for all languages
   const handleEdit = () => {
     if (selectedTranslation) {
-      updateTranslation(
-        {
-          id: selectedTranslation.id,
-          data: formData,
-        },
-        {
-          onSuccess: () => {
-            setEditModalOpened(false);
-            setSelectedTranslation(null);
-            setFormData({
-              translationKey: "",
+      // Get all existing translations for this key
+      const existingTranslations =
+        (groupedTranslations?.[selectedTranslation.translationKey] as Record<
+          string,
+          Translation
+        >) || {};
+
+      const updatePromises = [];
+
+      // Update Russian translation if it exists or if new value is provided
+      if (existingTranslations["ru"] && formData.ru.trim()) {
+        updatePromises.push(
+          updateTranslation({
+            id: existingTranslations["ru"].id,
+            data: {
+              translationKey: formData.translationKey,
+              languageCode: "ru",
+              translationValue: formData.ru.trim(),
+              description: formData.description,
+              isActive: formData.isActive,
+            },
+          })
+        );
+      } else if (formData.ru.trim() && !existingTranslations["ru"]) {
+        // Create new Russian translation if it doesn't exist
+        updatePromises.push(
+          createTranslation({
+            translationKey: formData.translationKey,
+            languageCode: "ru",
+            translationValue: formData.ru.trim(),
+            description: formData.description,
+            isActive: formData.isActive,
+          })
+        );
+      }
+
+      // Update English translation if it exists or if new value is provided
+      if (existingTranslations["en"] && formData.en.trim()) {
+        updatePromises.push(
+          updateTranslation({
+            id: existingTranslations["en"].id,
+            data: {
+              translationKey: formData.translationKey,
               languageCode: "en",
-              translationValue: "",
-              description: "",
-              isActive: true,
-            });
-          },
-        }
-      );
+              translationValue: formData.en.trim(),
+              description: formData.description,
+              isActive: formData.isActive,
+            },
+          })
+        );
+      } else if (formData.en.trim() && !existingTranslations["en"]) {
+        // Create new English translation if it doesn't exist
+        updatePromises.push(
+          createTranslation({
+            translationKey: formData.translationKey,
+            languageCode: "en",
+            translationValue: formData.en.trim(),
+            description: formData.description,
+            isActive: formData.isActive,
+          })
+        );
+      }
+
+      // Update Uzbek translation if it exists or if new value is provided
+      if (existingTranslations["uz"] && formData.uz.trim()) {
+        updatePromises.push(
+          updateTranslation({
+            id: existingTranslations["uz"].id,
+            data: {
+              translationKey: formData.translationKey,
+              languageCode: "uz",
+              translationValue: formData.uz.trim(),
+              description: formData.description,
+              isActive: formData.isActive,
+            },
+          })
+        );
+      } else if (formData.uz.trim() && !existingTranslations["uz"]) {
+        // Create new Uzbek translation if it doesn't exist
+        updatePromises.push(
+          createTranslation({
+            translationKey: formData.translationKey,
+            languageCode: "uz",
+            translationValue: formData.uz.trim(),
+            description: formData.description,
+            isActive: formData.isActive,
+          })
+        );
+      }
+
+      // Execute all updates
+      Promise.all(updatePromises)
+        .then(() => {
+          setEditModalOpened(false);
+          setSelectedTranslation(null);
+          setFormData({
+            translationKey: "",
+            ru: "",
+            en: "",
+            uz: "",
+            description: "",
+            isActive: true,
+          });
+        })
+        .catch((error) => {
+          console.error("Error updating translations:", error);
+        });
     }
   };
 
@@ -142,13 +294,38 @@ const TranslationManagement: React.FC = () => {
   // Open edit modal
   const openEditModal = (translation: Translation) => {
     setSelectedTranslation(translation);
-    setFormData({
-      translationKey: translation.translationKey,
-      languageCode: translation.languageCode,
-      translationValue: translation.translationValue,
-      description: translation.description || "",
-      isActive: translation.isActive,
-    });
+
+    // Get all translations for this key to populate all language fields
+    if (
+      groupedTranslations &&
+      groupedTranslations[translation.translationKey]
+    ) {
+      const langMap = groupedTranslations[translation.translationKey] as Record<
+        string,
+        Translation
+      >;
+      setFormData({
+        translationKey: translation.translationKey,
+        ru: langMap["ru"]?.translationValue || "",
+        en: langMap["en"]?.translationValue || "",
+        uz: langMap["uz"]?.translationValue || "",
+        description: translation.description || "",
+        isActive: translation.isActive,
+      });
+    } else {
+      // Fallback if grouped data not available
+      setFormData({
+        translationKey: translation.translationKey,
+        ru:
+          translation.languageCode === "ru" ? translation.translationValue : "",
+        en:
+          translation.languageCode === "en" ? translation.translationValue : "",
+        uz:
+          translation.languageCode === "uz" ? translation.translationValue : "",
+        description: translation.description || "",
+        isActive: translation.isActive,
+      });
+    }
     setEditModalOpened(true);
   };
 
@@ -158,29 +335,23 @@ const TranslationManagement: React.FC = () => {
     setDeleteModalOpened(true);
   };
 
-  // Pagination
-  const totalPages = Math.ceil((searchResults?.length || 0) / itemsPerPage);
-  const paginatedResults = searchResults?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   // Language change handler
-  const handleLanguageChange = (language: string) => {
-    changeLanguage(language);
+  const handleLanguageChange = async (language: string) => {
+    console.log(`🔄 TranslationManagement: Changing language to ${language}`);
+    await changeLanguage(language);
+    console.log(`🔄 TranslationManagement: Language changed to ${language}`);
   };
 
   return (
     <Box>
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
+      <>
         <Group justify="space-between" mb="md">
           <Title order={2}>
             <IconLanguage size={24} style={{ marginRight: 8 }} />
             Translation Management
           </Title>
           <Group>
-            <Select
-              label="Current Language"
+            {/* <Select
               value={currentLanguage}
               onChange={(value) => value && handleLanguageChange(value)}
               data={supportedLanguages.map((lang) => ({
@@ -188,11 +359,12 @@ const TranslationManagement: React.FC = () => {
                 label: lang.toUpperCase(),
               }))}
               size="sm"
-            />
+            /> */}
             <Button
               leftSection={<IconPlus size={16} />}
               onClick={() => setCreateModalOpened(true)}
               color="blue"
+              radius="xl"
             >
               Add Translation
             </Button>
@@ -207,107 +379,133 @@ const TranslationManagement: React.FC = () => {
             onChange={(e) => setSearchKeyword(e.target.value)}
             leftSection={<IconSearch size={16} />}
             style={{ flex: 1 }}
+            radius="xl"
           />
-          <Button onClick={handleSearch} variant="outline">
+          <Button onClick={handleSearch} variant="outline" radius="xl">
             Search
           </Button>
         </Group>
 
-        {/* Translations Table */}
-        <Table striped highlightOnHover>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Key</Table.Th>
-              <Table.Th>Language</Table.Th>
-              <Table.Th>Value</Table.Th>
-              <Table.Th>Description</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>Actions</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {paginatedResults?.map((translation) => (
-              <Table.Tr key={translation.id}>
-                <Table.Td>
-                  <Text size="sm" fw={500}>
-                    {translation.translationKey}
-                  </Text>
-                </Table.Td>
-                <Table.Td>
-                  <Badge color="blue" variant="light">
-                    {translation.languageCode.toUpperCase()}
-                  </Badge>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm" style={{ maxWidth: 200 }} truncate>
-                    {translation.translationValue}
-                  </Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm" c="dimmed" style={{ maxWidth: 150 }} truncate>
-                    {translation.description || "-"}
-                  </Text>
-                </Table.Td>
-                <Table.Td>
-                  <Badge
-                    color={translation.isActive ? "green" : "red"}
-                    variant="light"
-                  >
-                    {translation.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </Table.Td>
-                <Table.Td>
-                  <Group gap="xs">
-                    <ActionIcon
-                      size="sm"
-                      variant="subtle"
-                      color="blue"
-                      onClick={() => openEditModal(translation)}
-                    >
-                      <IconEdit size={16} />
-                    </ActionIcon>
-                    <ActionIcon
-                      size="sm"
-                      variant="subtle"
-                      color="red"
-                      onClick={() => openDeleteModal(translation)}
-                    >
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                  </Group>
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+        {/* Debug Info */}
+        {/* <Box mb="md" p="xs" bg="gray.1" style={{ borderRadius: 4 }}>
+          <Text size="xs" c="dimmed">
+            Debug: groupedTranslationsLoading=
+            {groupedTranslationsLoading.toString()}, groupedTranslations keys=
+            {Object.keys(groupedTranslations || {}).length}, searchResults
+            count={searchResults?.length || 0}
+            {groupedTranslationsError &&
+              `, Error: ${groupedTranslationsError.message}`}
+          </Text>
+        </Box> */}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <Group justify="center" mt="md">
-            <Pagination
-              total={totalPages}
-              value={currentPage}
-              onChange={setCurrentPage}
-              size="sm"
-            />
-          </Group>
+        {/* Grouped Translations Table */}
+        {groupedTranslations && Object.keys(groupedTranslations).length > 0 && (
+          <>
+            <Text size="lg" fw={600} mb="md">
+              Grouped Translations by Key
+            </Text>
+            <Table striped highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Key</Table.Th>
+                  <Table.Th>Russian (ru)</Table.Th>
+                  <Table.Th>English (en)</Table.Th>
+                  <Table.Th>Uzbek (uz)</Table.Th>
+                  <Table.Th>Actions</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {Object.entries(groupedTranslations).map(([key, langMap]) => (
+                  <Table.Tr key={key}>
+                    <Table.Td>
+                      <Text size="sm" fw={500}>
+                        {key}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" style={{ maxWidth: 200 }} truncate>
+                        {(langMap as Record<string, Translation>)["ru"]
+                          ?.translationValue || "-"}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" style={{ maxWidth: 200 }} truncate>
+                        {(langMap as Record<string, Translation>)["en"]
+                          ?.translationValue || "-"}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" style={{ maxWidth: 200 }} truncate>
+                        {(langMap as Record<string, Translation>)["uz"]
+                          ?.translationValue || "-"}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          color="blue"
+                          onClick={() =>
+                            openEditModal(
+                              Object.values(
+                                langMap as Record<string, Translation>
+                              )[0]
+                            )
+                          }
+                          title="Edit Translation"
+                        >
+                          <IconEdit size={16} />
+                        </ActionIcon>
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          color="red"
+                          onClick={() =>
+                            openDeleteModal(
+                              Object.values(
+                                langMap as Record<string, Translation>
+                              )[0]
+                            )
+                          }
+                          title="Delete Translation"
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </>
+        )}
+
+        {/* Error state */}
+        {groupedTranslationsError && (
+          <Box p="md" bg="red.1" style={{ borderRadius: 4 }} mb="md">
+            <Text c="red" size="sm">
+              Error loading translations: {groupedTranslationsError.message}
+            </Text>
+          </Box>
         )}
 
         {/* Loading state */}
-        {allTranslationsLoading && (
+        {groupedTranslationsLoading && (
           <Text ta="center" c="dimmed" py="xl">
             Loading translations...
           </Text>
         )}
 
         {/* Empty state */}
-        {!allTranslationsLoading &&
+        {!groupedTranslationsLoading &&
+          !groupedTranslationsError &&
           (!searchResults || searchResults.length === 0) && (
             <Text ta="center" c="dimmed" py="xl">
               No translations found.
             </Text>
           )}
-      </Card>
+      </>
 
       {/* Create Modal */}
       <Modal
@@ -315,6 +513,7 @@ const TranslationManagement: React.FC = () => {
         onClose={() => setCreateModalOpened(false)}
         title="Add New Translation"
         size="lg"
+        centered
       >
         <Stack gap="md">
           <TextInput
@@ -326,27 +525,23 @@ const TranslationManagement: React.FC = () => {
             }
             required
           />
-          <Select
-            label="Language"
-            placeholder="Select language"
-            data={supportedLanguages.map((lang) => ({
-              value: lang,
-              label: lang.toUpperCase(),
-            }))}
-            value={formData.languageCode}
-            onChange={(value) =>
-              setFormData({ ...formData, languageCode: value || "en" })
-            }
-            required
+          <TextInput
+            label="Russian (ru)"
+            placeholder="Enter Russian translation"
+            value={formData.ru}
+            onChange={(e) => setFormData({ ...formData, ru: e.target.value })}
           />
           <TextInput
-            label="Translation Value"
-            placeholder="Enter translation"
-            value={formData.translationValue}
-            onChange={(e) =>
-              setFormData({ ...formData, translationValue: e.target.value })
-            }
-            required
+            label="English (en)"
+            placeholder="Enter English translation"
+            value={formData.en}
+            onChange={(e) => setFormData({ ...formData, en: e.target.value })}
+          />
+          <TextInput
+            label="Uzbek (uz)"
+            placeholder="Enter Uzbek translation"
+            value={formData.uz}
+            onChange={(e) => setFormData({ ...formData, uz: e.target.value })}
           />
           <Textarea
             label="Description"
@@ -367,7 +562,10 @@ const TranslationManagement: React.FC = () => {
             <Button
               onClick={handleCreate}
               loading={isCreating}
-              disabled={!formData.translationKey || !formData.translationValue}
+              disabled={
+                !formData.translationKey ||
+                (!formData.ru && !formData.en && !formData.uz)
+              }
             >
               Create
             </Button>
@@ -379,8 +577,9 @@ const TranslationManagement: React.FC = () => {
       <Modal
         opened={editModalOpened}
         onClose={() => setEditModalOpened(false)}
-        title="Edit Translation"
+        title={`Edit Translation: ${selectedTranslation?.translationKey}`}
         size="lg"
+        centered
       >
         <Stack gap="md">
           <TextInput
@@ -391,28 +590,26 @@ const TranslationManagement: React.FC = () => {
               setFormData({ ...formData, translationKey: e.target.value })
             }
             required
-          />
-          <Select
-            label="Language"
-            placeholder="Select language"
-            data={supportedLanguages.map((lang) => ({
-              value: lang,
-              label: lang.toUpperCase(),
-            }))}
-            value={formData.languageCode}
-            onChange={(value) =>
-              setFormData({ ...formData, languageCode: value || "en" })
-            }
-            required
+            disabled
+            description="Translation key cannot be changed after creation"
           />
           <TextInput
-            label="Translation Value"
-            placeholder="Enter translation"
-            value={formData.translationValue}
-            onChange={(e) =>
-              setFormData({ ...formData, translationValue: e.target.value })
-            }
-            required
+            label="Russian (ru)"
+            placeholder="Enter Russian translation"
+            value={formData.ru}
+            onChange={(e) => setFormData({ ...formData, ru: e.target.value })}
+          />
+          <TextInput
+            label="English (en)"
+            placeholder="Enter English translation"
+            value={formData.en}
+            onChange={(e) => setFormData({ ...formData, en: e.target.value })}
+          />
+          <TextInput
+            label="Uzbek (uz)"
+            placeholder="Enter Uzbek translation"
+            value={formData.uz}
+            onChange={(e) => setFormData({ ...formData, uz: e.target.value })}
           />
           <Textarea
             label="Description"
@@ -430,9 +627,12 @@ const TranslationManagement: React.FC = () => {
             <Button
               onClick={handleEdit}
               loading={isUpdating}
-              disabled={!formData.translationKey || !formData.translationValue}
+              disabled={
+                !formData.translationKey ||
+                (!formData.ru && !formData.en && !formData.uz)
+              }
             >
-              Update
+              Update All Languages
             </Button>
           </Group>
         </Stack>
@@ -444,6 +644,7 @@ const TranslationManagement: React.FC = () => {
         onClose={() => setDeleteModalOpened(false)}
         title="Delete Translation"
         size="sm"
+        centered
       >
         <Stack gap="md">
           <Text>

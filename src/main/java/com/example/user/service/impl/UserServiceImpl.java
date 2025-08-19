@@ -214,4 +214,46 @@ public class UserServiceImpl implements UserService {
             throw new PasswordValidationException("Password must contain at least one letter and one number");
         }
     }
+
+    @Override
+    public User findOrCreateOAuth2User(String email, String name, String oauth2Provider, String oauth2ProviderId, String profilePicture) {
+        log.info("Finding or creating OAuth2 user with email: {}, provider: {}", email, oauth2Provider);
+        
+        // Try to find existing user by email
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            log.info("Found existing user with email: {}, updating OAuth2 information", email);
+            
+            // Update OAuth2 provider information
+            user.setOauth2Provider(oauth2Provider);
+            user.setOauth2ProviderId(oauth2ProviderId);
+            user.setProfilePicture(profilePicture);
+            user.setEmailVerified(true); // OAuth2 users have verified emails
+            
+            // Save and return updated user
+            User savedUser = userRepository.save(user);
+            log.info("Updated existing user with OAuth2 information, ID: {}", savedUser.getId());
+            return savedUser;
+        }
+        
+        // Create new OAuth2 user
+        log.info("Creating new OAuth2 user with email: {}, provider: {}", email, oauth2Provider);
+        User newUser = User.builder()
+                .email(email)
+                .name(name != null ? name : email.split("@")[0]) // Use email prefix if name is null
+                .phone("") // OAuth2 users don't have phone initially
+                .password("") // OAuth2 users don't have passwords
+                .role(UserRole.USER) // Default role for OAuth2 users
+                .oauth2Provider(oauth2Provider)
+                .oauth2ProviderId(oauth2ProviderId)
+                .profilePicture(profilePicture)
+                .emailVerified(true) // OAuth2 users have verified emails
+                .build();
+        
+        User savedUser = userRepository.save(newUser);
+        log.info("Created new OAuth2 user with ID: {}", savedUser.getId());
+        return savedUser;
+    }
 }

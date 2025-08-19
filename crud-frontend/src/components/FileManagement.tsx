@@ -29,6 +29,9 @@ import {
   IconEyeOff,
 } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
+import api from "../utils/api";
+import { t } from "i18next";
+import { useTranslations } from "../hooks/useTranslations";
 
 interface FileDto {
   id: number;
@@ -56,6 +59,7 @@ interface FileUploadRequest {
 
 const FileManagement: React.FC = () => {
   const { token } = useAuth();
+  const { t } = useTranslations();
   const [files, setFiles] = useState<FileDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadModalOpened, setUploadModalOpened] = useState(false);
@@ -80,40 +84,29 @@ const FileManagement: React.FC = () => {
     }
   }, [token, currentPage, searchKeyword, fileTypeFilter]);
 
+  // Load all files from the database (both public and private)
   const loadFiles = async () => {
-    if (!token) return;
+    if (!token) return; // Only fetch if we have a token
 
     setLoading(true);
     try {
-      let url = `/api/files/my-files?page=${currentPage - 1}&size=${pageSize}`;
+      let url = `/files/all?page=${currentPage - 1}&size=${pageSize}`;
 
       if (searchKeyword) {
-        url = `/api/files/search?keyword=${encodeURIComponent(
+        url = `/files/search?keyword=${encodeURIComponent(
           searchKeyword
         )}&page=${currentPage - 1}&size=${pageSize}`;
       } else if (fileTypeFilter) {
-        url = `/api/files/type/${fileTypeFilter}?page=${
+        url = `/files/type/${fileTypeFilter}?page=${
           currentPage - 1
         }&size=${pageSize}`;
       }
 
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get(url);
 
-      if (response.ok) {
-        const data = await response.json();
-        setFiles(data.content || []);
-        setTotalPages(data.totalPages || 1);
-      } else {
-        notifications.show({
-          title: "Error",
-          message: "Failed to load files",
-          color: "red",
-        });
-      }
+      const data = response.data;
+      setFiles(data.content || []);
+      setTotalPages(data.totalPages || 1);
     } catch (error) {
       notifications.show({
         title: "Error",
@@ -135,36 +128,25 @@ const FileManagement: React.FC = () => {
       formData.append("description", uploadForm.description);
       formData.append("isPublic", uploadForm.isPublic.toString());
 
-      const response = await fetch("/api/files/upload", {
-        method: "POST",
+      const response = await api.post("/files/upload", formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-        body: formData,
       });
 
-      if (response.ok) {
-        notifications.show({
-          title: "Success",
-          message: "File uploaded successfully",
-          color: "green",
-        });
-        setUploadModalOpened(false);
-        setUploadForm({ description: "", isPublic: false });
-        setSelectedFileForUpload(null);
-        loadFiles();
-      } else {
-        const errorData = await response.json();
-        notifications.show({
-          title: "Error",
-          message: errorData.message || "Failed to upload file",
-          color: "red",
-        });
-      }
-    } catch (error) {
+      notifications.show({
+        title: "Success",
+        message: "File uploaded successfully",
+        color: "green",
+      });
+      setUploadModalOpened(false);
+      setUploadForm({ description: "", isPublic: false });
+      setSelectedFileForUpload(null);
+      loadFiles();
+    } catch (error: any) {
       notifications.show({
         title: "Error",
-        message: "Failed to upload file",
+        message: error.response?.data?.message || "Failed to upload file",
         color: "red",
       });
     } finally {
@@ -176,30 +158,20 @@ const FileManagement: React.FC = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`/api/files/download/${fileId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await api.get(`/files/download/${fileId}`, {
+        responseType: "blob",
       });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download =
-          files.find((f) => f.id === fileId)?.originalFileName || "download";
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        notifications.show({
-          title: "Error",
-          message: "Failed to download file",
-          color: "red",
-        });
-      }
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        files.find((f) => f.id === fileId)?.originalFileName || "download";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       notifications.show({
         title: "Error",
@@ -216,27 +188,14 @@ const FileManagement: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/files/${fileId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.delete(`/files/${fileId}`);
 
-      if (response.ok) {
-        notifications.show({
-          title: "Success",
-          message: "File deleted successfully",
-          color: "green",
-        });
-        loadFiles();
-      } else {
-        notifications.show({
-          title: "Error",
-          message: "Failed to delete file",
-          color: "red",
-        });
-      }
+      notifications.show({
+        title: "Success",
+        message: "File deleted successfully",
+        color: "green",
+      });
+      loadFiles();
     } catch (error) {
       notifications.show({
         title: "Error",
@@ -253,27 +212,14 @@ const FileManagement: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/files/${fileId}/toggle-visibility`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.patch(`/files/${fileId}/toggle-visibility`);
 
-      if (response.ok) {
-        notifications.show({
-          title: "Success",
-          message: "File visibility updated",
-          color: "green",
-        });
-        loadFiles();
-      } else {
-        notifications.show({
-          title: "Error",
-          message: "Failed to update file visibility",
-          color: "red",
-        });
-      }
+      notifications.show({
+        title: "Success",
+        message: "File visibility updated",
+        color: "green",
+      });
+      loadFiles();
     } catch (error) {
       notifications.show({
         title: "Error",
@@ -290,37 +236,21 @@ const FileManagement: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/files/${selectedFile.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(uploadForm),
-      });
+      await api.put(`/files/${selectedFile.id}`, uploadForm);
 
-      if (response.ok) {
-        notifications.show({
-          title: "Success",
-          message: "File updated successfully",
-          color: "green",
-        });
-        setEditModalOpened(false);
-        setSelectedFile(null);
-        setUploadForm({ description: "", isPublic: false });
-        loadFiles();
-      } else {
-        const errorData = await response.json();
-        notifications.show({
-          title: "Error",
-          message: errorData.message || "Failed to update file",
-          color: "red",
-        });
-      }
-    } catch (error) {
+      notifications.show({
+        title: "Success",
+        message: "File updated successfully",
+        color: "green",
+      });
+      setEditModalOpened(false);
+      setSelectedFile(null);
+      setUploadForm({ description: "", isPublic: false });
+      loadFiles();
+    } catch (error: any) {
       notifications.show({
         title: "Error",
-        message: "Failed to update file",
+        message: error.response?.data?.message || "Failed to update file",
         color: "red",
       });
     } finally {
@@ -371,13 +301,14 @@ const FileManagement: React.FC = () => {
           leftSection={<IconUpload size={16} />}
           onClick={() => setUploadModalOpened(true)}
           color="blue"
+          radius="xl"
         >
-          Upload File
+          {t("Upload File")}
         </Button>
       </Group>
 
       {/* Search and Filters */}
-      <Card mb="lg" withBorder>
+      <Card mb="lg" withBorder bg="var(--bg-navbar)" radius="lg">
         <Grid>
           <Grid.Col span={6}>
             <TextInput
@@ -385,11 +316,13 @@ const FileManagement: React.FC = () => {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               leftSection={<IconEye size={16} />}
+              radius="xl"
+              bg="var(--bg-secondary)"
             />
           </Grid.Col>
           <Grid.Col span={3}>
             <Select
-              placeholder="File Type"
+              placeholder={t("File Type")}
               value={fileTypeFilter}
               onChange={(value) => setFileTypeFilter(value || "")}
               data={[
@@ -400,6 +333,7 @@ const FileManagement: React.FC = () => {
                 { value: "jpg", label: "Images" },
                 { value: "zip", label: "Archives" },
               ]}
+              radius="xl"
             />
           </Grid.Col>
           <Grid.Col span={3}>
@@ -411,6 +345,7 @@ const FileManagement: React.FC = () => {
                 setCurrentPage(1);
               }}
               fullWidth
+              radius="xl"
             >
               Clear Filters
             </Button>
@@ -420,7 +355,7 @@ const FileManagement: React.FC = () => {
 
       {/* Files List */}
       {files.length === 0 ? (
-        <Card withBorder>
+        <Card withBorder bg="var(--bg-navbar)">
           <Text ta="center" color="dimmed" py="xl">
             No files found. Upload your first file to get started!
           </Text>
@@ -430,7 +365,7 @@ const FileManagement: React.FC = () => {
           <Grid>
             {files.map((file) => (
               <Grid.Col key={file.id} span={12} md={6} lg={4}>
-                <Card withBorder>
+                <Card withBorder bg="var(--bg-navbar)" radius="lg">
                   <Group position="apart" mb="xs">
                     <Text size="lg">{getFileIcon(file.fileType)}</Text>
                     <Badge color={file.isPublic ? "green" : "blue"}>
@@ -515,6 +450,7 @@ const FileManagement: React.FC = () => {
         onClose={() => setUploadModalOpened(false)}
         title="Upload File"
         size="md"
+        centered
       >
         <Stack>
           <FileInput
@@ -570,6 +506,7 @@ const FileManagement: React.FC = () => {
         onClose={() => setEditModalOpened(false)}
         title="Edit File"
         size="md"
+        centered
       >
         <Stack>
           <Text size="sm" color="dimmed">
