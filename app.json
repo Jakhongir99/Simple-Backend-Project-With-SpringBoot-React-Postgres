@@ -1,0 +1,23 @@
+{
+  "name": "java-crud-application",
+  "description": "A CRUD application with Spring Boot backend and React frontend",
+  "repository": "https://github.com/yourusername/java-crud-app",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["java", "spring-boot", "react", "crud"],
+  "env": {
+    "SPRING_PROFILES_ACTIVE": {
+      "description": "Spring profile to use",
+      "value": "prod"
+    },
+    "DATABASE_URL": {
+      "description": "Database connection URL",
+      "required": false
+    }
+  },
+  "addons": ["heroku-postgresql"],
+  "buildpacks": [
+    {
+      "url": "heroku/java"
+    }
+  ]
+}
