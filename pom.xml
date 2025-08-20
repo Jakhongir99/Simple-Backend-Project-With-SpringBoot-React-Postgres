@@ -68,11 +68,11 @@
         <version>0.9.1</version>
     </dependency>
     
-    <!-- Swagger OpenAPI for Spring Boot 2.x -->
+    <!-- SpringDoc OpenAPI for Spring Boot 2.x -->
     <dependency>
-        <groupId>io.springfox</groupId>
-        <artifactId>springfox-boot-starter</artifactId>
-        <version>3.0.0</version>
+        <groupId>org.springdoc</groupId>
+        <artifactId>springdoc-openapi-ui</artifactId>
+        <version>1.6.15</version>
     </dependency>
 
     <dependency>
