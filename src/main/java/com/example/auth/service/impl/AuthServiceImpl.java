@@ -7,6 +7,7 @@ import com.example.auth.exception.InvalidCredentialsException;
 import com.example.user.dto.UserDto;
 import com.example.user.entity.User;
 import com.example.user.enums.UserRole;
+import com.example.user.mapper.UserMapper;
 import com.example.user.repository.UserRepository;
 import com.example.user.service.UserService;
 import com.example.auth.service.AuthService;
@@ -27,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final UserMapper userMapper;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -123,7 +125,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserDto getCurrentUser() {
         User currentUser = userService.getCurrentUser();
-        return userService.getUserById(currentUser.getId()).orElse(null);
+        return userMapper.toDto(currentUser);
     }
 
     @Override

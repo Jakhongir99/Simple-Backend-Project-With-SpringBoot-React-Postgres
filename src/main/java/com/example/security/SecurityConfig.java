@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/oauth2/**").permitAll()
                 .antMatchers("/api/auth/me").authenticated()
                 .antMatchers(HttpMethod.GET, "/api/users/**").authenticated()
+                // Roles endpoints - require authentication
+                .antMatchers("/api/roles/**").authenticated()
                 // Translation endpoints - allow public access for all operations
                 .antMatchers("/api/translations/**").permitAll()
                 .antMatchers("/api/translations/debug/**").permitAll() // Debug endpoint

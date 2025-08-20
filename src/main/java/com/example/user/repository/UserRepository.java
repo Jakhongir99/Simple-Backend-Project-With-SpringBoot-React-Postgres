@@ -47,4 +47,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRole(@Param("role") String role);
     
     Optional<User> findByRole(UserRole role);
+    
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.email = :email")
+    Optional<User> findByEmailWithRoles(@Param("email") String email);
 }

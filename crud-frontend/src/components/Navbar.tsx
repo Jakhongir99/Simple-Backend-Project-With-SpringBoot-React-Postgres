@@ -8,6 +8,7 @@ import {
   IconPalette,
   IconLanguage,
   IconUpload,
+  IconShield,
 } from "@tabler/icons-react";
 import { useTranslations } from "../hooks/useTranslations";
 
@@ -162,6 +163,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
             style={getButtonStyles(currentPage === "translations")}
           >
             {t("nav.translations")}
+          </Button>
+
+          <Button
+            variant={currentPage === "roles" ? "filled" : "light"}
+            leftSection={<IconShield size={16} />}
+            justify="flex-start"
+            fullWidth
+            size="md"
+            radius="xl"
+            onClick={() => onNavigate?.("roles")}
+            style={getButtonStyles(currentPage === "roles")}
+          >
+            Roles
           </Button>
 
           <Button

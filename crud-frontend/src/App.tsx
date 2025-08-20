@@ -10,6 +10,7 @@ import { Dashboard } from "./components/Dashboard";
 import DepartmentManagement from "./components/DepartmentManagement";
 import JobManagement from "./components/JobManagement";
 import EmployeeManagement from "./components/EmployeeManagement";
+import RoleManagement from "./components/RoleManagement";
 
 import TranslationManagement from "./components/TranslationManagement";
 import FileManagement from "./components/FileManagement";
@@ -398,6 +399,26 @@ function App() {
                 setUserProfile={setUserProfile}
               >
                 <FileManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/roles"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="roles"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <RoleManagement />
               </Layout>
             }
           />

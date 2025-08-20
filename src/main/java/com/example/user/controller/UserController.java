@@ -4,6 +4,7 @@ import com.example.user.dto.CreateUserRequest;
 import com.example.user.dto.UpdateUserRequest;
 import com.example.user.dto.UserDto;
 import com.example.user.entity.User;
+import com.example.user.mapper.UserMapper;
 import com.example.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,13 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
+    private final UserMapper userMapper;
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> getCurrentUser() {
         try {
             User currentUser = userService.getCurrentUser();
-            UserDto userDto = userService.getUserById(currentUser.getId()).orElse(null);
+            UserDto userDto = userMapper.toDto(currentUser);
             
             if (userDto == null) {
                 return ResponseEntity.notFound().build();
