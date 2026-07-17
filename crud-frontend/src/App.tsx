@@ -7,10 +7,9 @@ import { Layout } from "./components/Layout";
 import { AuthView } from "./components/AuthView";
 import { UserManagement } from "./components/UserManagement";
 import { Dashboard } from "./components/Dashboard";
-import DepartmentManagement from "./components/DepartmentManagement";
-import JobManagement from "./components/JobManagement";
-import EmployeeManagement from "./components/EmployeeManagement";
 import RoleManagement from "./components/RoleManagement";
+import HiringWorkflowManagement from "./components/HiringWorkflowManagement";
+import ProcessManagement from "./components/ProcessManagement";
 
 import TranslationManagement from "./components/TranslationManagement";
 import FileManagement from "./components/FileManagement";
@@ -27,6 +26,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { checkAuthStatus } from "./utils/auth";
 import { useTheme } from "./contexts/ThemeContext";
+import { getFieldErrors } from "./utils/apiErrors";
 
 interface User {
   id?: number;
@@ -48,6 +48,9 @@ function App() {
     phone: "",
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [userFormErrors, setUserFormErrors] = useState<Record<string, string>>(
+    {}
+  );
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [currentView, setCurrentView] = useState<string>("dashboard");
   const pageSize = 5;
@@ -195,36 +198,54 @@ function App() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser.name || !currentUser.email || !currentUser.password) {
+    if (!currentUser.name || !currentUser.email || (!isEditing && !currentUser.password)) {
       return;
     }
 
+    setUserFormErrors({});
+
+    const resetForm = () => {
+      setCurrentUser({ name: "", email: "", password: "", phone: "" });
+      setIsEditing(false);
+      setUserFormErrors({});
+    };
+
     if (isEditing && currentUser.id) {
-      updateUserMutation.mutate({
-        id: currentUser.id,
-        userData: {
+      updateUserMutation.mutate(
+        {
+          id: currentUser.id,
+          userData: {
+            name: currentUser.name,
+            email: currentUser.email,
+            phone: currentUser.phone,
+          },
+        },
+        {
+          onSuccess: resetForm,
+          onError: (error) => setUserFormErrors(getFieldErrors(error)),
+        }
+      );
+    } else {
+      createUserMutation.mutate(
+        {
           name: currentUser.name,
           email: currentUser.email,
-          phone: currentUser.phone,
+          password: currentUser.password,
+          phone: currentUser.phone || "",
         },
-      });
-    } else {
-      createUserMutation.mutate({
-        name: currentUser.name,
-        email: currentUser.email,
-        password: currentUser.password,
-        phone: currentUser.phone || "",
-      });
+        {
+          onSuccess: resetForm,
+          onError: (error) => setUserFormErrors(getFieldErrors(error)),
+        }
+      );
     }
-
-    setCurrentUser({ name: "", email: "", password: "", phone: "" });
-    setIsEditing(false);
   };
 
   const editUser = (_id: number) => {
     // This will be handled by the UserManagement component
     // We just need to set the editing state
     setIsEditing(true);
+    setUserFormErrors({});
   };
 
   const deleteUser = (id: number) => {
@@ -287,78 +308,25 @@ function App() {
                 <UserManagement
                   users={usersData?.content || []}
                   currentUser={currentUser}
-                  setCurrentUser={setCurrentUser}
+                  setCurrentUser={(user) => {
+                    setCurrentUser(user);
+                    setUserFormErrors({});
+                  }}
                   isEditing={isEditing}
-                  setIsEditing={setIsEditing}
+                  setIsEditing={(editing) => {
+                    setIsEditing(editing);
+                    setUserFormErrors({});
+                  }}
                   loading={usersLoading}
                   currentPage={currentPage}
                   totalPages={usersData?.totalPages || 1}
+                  fieldErrors={userFormErrors}
                   onSubmit={handleSubmit}
                   onEdit={editUser}
                   onDelete={deleteUser}
                   onRefresh={() => {}}
                   onPageChange={(page) => setCurrentPage(page)}
                 />
-              </Layout>
-            }
-          />
-
-          <Route
-            path="/departments"
-            element={
-              <Layout
-                opened={opened}
-                setOpened={setOpened}
-                userProfile={userProfile}
-                onProfileClick={() => setProfileModalOpened(true)}
-                onLogout={logout}
-                onNavigate={handleNavigate}
-                currentPage="departments"
-                profileModalOpened={profileModalOpened}
-                setProfileModalOpened={setProfileModalOpened}
-                setUserProfile={setUserProfile}
-              >
-                <DepartmentManagement />
-              </Layout>
-            }
-          />
-
-          <Route
-            path="/jobs"
-            element={
-              <Layout
-                opened={opened}
-                setOpened={setOpened}
-                userProfile={userProfile}
-                onProfileClick={() => setProfileModalOpened(true)}
-                onLogout={logout}
-                onNavigate={handleNavigate}
-                currentPage="jobs"
-                profileModalOpened={profileModalOpened}
-                setProfileModalOpened={setProfileModalOpened}
-                setUserProfile={setUserProfile}
-              >
-                <JobManagement />
-              </Layout>
-            }
-          />
-
-          <Route
-            path="/employees"
-            element={
-              <Layout
-                opened={opened}
-                setOpened={setOpened}
-                userProfile={userProfile}
-                onProfileClick={() => setProfileModalOpened(true)}
-                onLogout={logout}
-                onNavigate={handleNavigate}
-                currentPage="employees"
-                profileModalOpened={profileModalOpened}
-                setProfileModalOpened={setProfileModalOpened}
-                setUserProfile={setUserProfile}
-              >
-                <EmployeeManagement />
               </Layout>
             }
           />
@@ -419,6 +387,46 @@ function App() {
                 setUserProfile={setUserProfile}
               >
                 <RoleManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/hiring"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="hiring"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <HiringWorkflowManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/processes"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="processes"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <ProcessManagement />
               </Layout>
             }
           />

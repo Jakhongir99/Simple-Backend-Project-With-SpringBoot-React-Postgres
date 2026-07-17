@@ -4,6 +4,7 @@ import axios from "axios";
 import { notifications } from "@mantine/notifications";
 import { useMemo, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { showApiError } from "../utils/apiErrors";
 
 // Types for translation data
 export interface Translation {
@@ -156,13 +157,8 @@ export const useTranslations = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message:
-          error.response?.data?.message || "Failed to create translation",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Failed to create translation");
     },
   });
 
@@ -196,13 +192,8 @@ export const useTranslations = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message:
-          error.response?.data?.message || "Failed to update translation",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Failed to update translation");
     },
   });
 
@@ -224,13 +215,8 @@ export const useTranslations = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message:
-          error.response?.data?.message || "Failed to delete translation",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Failed to delete translation");
     },
   });
 

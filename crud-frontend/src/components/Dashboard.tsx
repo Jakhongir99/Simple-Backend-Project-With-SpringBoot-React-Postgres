@@ -1,11 +1,10 @@
 import React from "react";
-import { Card, Text, Group, Stack, Badge, Button, Flex } from "@mantine/core";
+import { Card, Text, Group, Stack, Badge, Flex } from "@mantine/core";
 import {
   IconUsers,
-  IconBuilding,
-  IconBriefcase,
-  IconUser,
   IconLanguage,
+  IconUserCheck,
+  IconSitemap,
 } from "@tabler/icons-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useTheme } from "../contexts/ThemeContext";
@@ -17,36 +16,28 @@ export const Dashboard: React.FC = () => {
   const stats = [
     {
       title: t("nav.users"),
-      value: "25",
+      value: "—",
       icon: IconUsers,
       color: "blue",
       description: "Active users in the system",
     },
     {
-      title: t("nav.employees"),
-      value: "150",
-      icon: IconUser,
+      title: t("nav.hiring", "Ishga olish"),
+      value: "—",
+      icon: IconUserCheck,
       color: "green",
-      description: "Total employees",
+      description: "Hiring workflow requests",
     },
     {
-      title: t("nav.departments"),
-      value: "12",
-      icon: IconBuilding,
+      title: t("nav.processes", "Jarayonlar"),
+      value: "—",
+      icon: IconSitemap,
       color: "violet",
-      description: "Company departments",
+      description: "BPMN process templates",
     },
-    {
-      title: t("nav.jobs"),
-      value: "45",
-      icon: IconBriefcase,
-      color: "orange",
-      description: "Available positions",
-    },
-
     {
       title: t("nav.translations"),
-      value: "18",
+      value: "—",
       icon: IconLanguage,
       color: "indigo",
       description: "Translation keys",
@@ -79,21 +70,17 @@ export const Dashboard: React.FC = () => {
                 <Text fw={500} size="lg">
                   {stat.title}
                 </Text>
-                <Badge color={stat.color} variant="light">
-                  {stat.value}
-                </Badge>
+                <IconComponent size={24} color={`var(--mantine-color-${stat.color}-6)`} />
               </Group>
-              <Group justify="space-between" align="flex-end" gap="xs">
-                <Stack gap={0}>
-                  <Text size="xl" fw={700} color={stat.color}>
-                    {stat.value}
-                  </Text>
-                  <Text size="xs" c="dimmed" maw={150}>
-                    {stat.description}
-                  </Text>
-                </Stack>
-                <IconComponent size={32} color={`var(--${stat.color}-6)`} />
-              </Group>
+              <Text size="xl" fw={700}>
+                {stat.value}
+              </Text>
+              <Text size="sm" c="dimmed" mt="xs">
+                {stat.description}
+              </Text>
+              <Badge color={stat.color} variant="light" mt="sm">
+                Active
+              </Badge>
             </Card>
           );
         })}

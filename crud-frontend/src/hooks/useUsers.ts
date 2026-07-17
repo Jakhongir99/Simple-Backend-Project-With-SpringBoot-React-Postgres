@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usersAPI } from "../utils/api";
 import { notifications } from "@mantine/notifications";
+import { showApiError } from "../utils/apiErrors";
 
 export interface UserData {
   id: number;
@@ -89,12 +90,8 @@ export const useCreateUser = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Failed to create user",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Failed to create user");
     },
   });
 };
@@ -119,12 +116,8 @@ export const useUpdateUser = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Failed to update user",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Failed to update user");
     },
   });
 };
@@ -147,12 +140,8 @@ export const useDeleteUser = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Failed to delete user",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Failed to delete user");
     },
   });
 };

@@ -84,6 +84,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
     }
 
+    // Spring Security @PreAuthorize denial -> 403 (instead of a generic 500)
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
+        String path = ((ServletWebRequest) request).getRequest().getRequestURI();
+        ApiError apiError = new ApiError(HttpStatus.FORBIDDEN.value(), "Forbidden",
+                "You do not have permission to perform this action", path);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
+    }
+
+    // Invalid workflow transition (e.g. approving a request in the wrong state) -> 400
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex, WebRequest request) {
+        String path = ((ServletWebRequest) request).getRequest().getRequestURI();
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(), path);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+    }
+
     // Generic exception handler should be last to catch any unhandled exceptions
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiError> handleRuntime(RuntimeException ex, WebRequest request) {

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_Leave"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="LeaveProcess" isExecutable="false">
+    <bpmn:startEvent id="L_Start" name="Ta&#39;til so&#39;raldi">
+      <bpmn:outgoing>LF_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="L_Manager" name="Rahbar ko&#39;rib chiqadi">
+      <bpmn:incoming>LF_1</bpmn:incoming>
+      <bpmn:outgoing>LF_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="L_Gw" name="Qaror">
+      <bpmn:incoming>LF_2</bpmn:incoming>
+      <bpmn:outgoing>LF_3</bpmn:outgoing>
+      <bpmn:outgoing>LF_4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="L_Approved" name="Tasdiqlandi">
+      <bpmn:incoming>LF_3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="L_Rejected" name="Rad etildi">
+      <bpmn:incoming>LF_4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="LF_1" sourceRef="L_Start" targetRef="L_Manager" />
+    <bpmn:sequenceFlow id="LF_2" sourceRef="L_Manager" targetRef="L_Gw" />
+    <bpmn:sequenceFlow id="LF_3" name="Ha" sourceRef="L_Gw" targetRef="L_Approved" />
+    <bpmn:sequenceFlow id="LF_4" name="Yo&#39;q" sourceRef="L_Gw" targetRef="L_Rejected" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="LeaveDiagram">
+    <bpmndi:BPMNPlane id="LeavePlane" bpmnElement="LeaveProcess">
+      <bpmndi:BPMNShape id="L_Start_di" bpmnElement="L_Start">
+        <dc:Bounds x="160" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="148" y="225" width="64" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_Manager_di" bpmnElement="L_Manager">
+        <dc:Bounds x="250" y="160" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_Gw_di" bpmnElement="L_Gw" isMarkerVisible="true">
+        <dc:Bounds x="430" y="175" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="438" y="145" width="34" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_Approved_di" bpmnElement="L_Approved">
+        <dc:Bounds x="552" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="540" y="225" width="60" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_Rejected_di" bpmnElement="L_Rejected">
+        <dc:Bounds x="437" y="320" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="425" y="363" width="60" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="LF_1_di" bpmnElement="LF_1">
+        <di:waypoint x="196" y="200" />
+        <di:waypoint x="250" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="LF_2_di" bpmnElement="LF_2">
+        <di:waypoint x="370" y="200" />
+        <di:waypoint x="430" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="LF_3_di" bpmnElement="LF_3">
+        <di:waypoint x="480" y="200" />
+        <di:waypoint x="552" y="200" />
+        <bpmndi:BPMNLabel><dc:Bounds x="508" y="182" width="20" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="LF_4_di" bpmnElement="LF_4">
+        <di:waypoint x="455" y="225" />
+        <di:waypoint x="455" y="320" />
+        <bpmndi:BPMNLabel><dc:Bounds x="461" y="263" width="20" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

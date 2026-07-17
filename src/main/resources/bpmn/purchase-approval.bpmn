@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_Purchase"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="PurchaseProcess" isExecutable="false">
+    <bpmn:startEvent id="P_Start" name="Xarid so&#39;rovi">
+      <bpmn:outgoing>PF_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="P_Finance" name="Moliya tekshiradi">
+      <bpmn:incoming>PF_1</bpmn:incoming>
+      <bpmn:outgoing>PF_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="P_Director" name="Director tasdiqlaydi">
+      <bpmn:incoming>PF_2</bpmn:incoming>
+      <bpmn:outgoing>PF_3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="P_End" name="Xarid qilindi">
+      <bpmn:incoming>PF_3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="PF_1" sourceRef="P_Start" targetRef="P_Finance" />
+    <bpmn:sequenceFlow id="PF_2" sourceRef="P_Finance" targetRef="P_Director" />
+    <bpmn:sequenceFlow id="PF_3" sourceRef="P_Director" targetRef="P_End" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="PurchaseDiagram">
+    <bpmndi:BPMNPlane id="PurchasePlane" bpmnElement="PurchaseProcess">
+      <bpmndi:BPMNShape id="P_Start_di" bpmnElement="P_Start">
+        <dc:Bounds x="160" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="148" y="225" width="64" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="P_Finance_di" bpmnElement="P_Finance">
+        <dc:Bounds x="250" y="160" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="P_Director_di" bpmnElement="P_Director">
+        <dc:Bounds x="430" y="160" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="P_End_di" bpmnElement="P_End">
+        <dc:Bounds x="612" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="600" y="225" width="60" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="PF_1_di" bpmnElement="PF_1">
+        <di:waypoint x="196" y="200" />
+        <di:waypoint x="250" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PF_2_di" bpmnElement="PF_2">
+        <di:waypoint x="370" y="200" />
+        <di:waypoint x="430" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PF_3_di" bpmnElement="PF_3">
+        <di:waypoint x="550" y="200" />
+        <di:waypoint x="612" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

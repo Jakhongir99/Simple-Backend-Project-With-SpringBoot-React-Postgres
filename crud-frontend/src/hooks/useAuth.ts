@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authAPI } from "../utils/api";
 import { notifications } from "@mantine/notifications";
+import { showApiError } from "../utils/apiErrors";
 import { useState, useEffect } from "react";
 
 export interface LoginCredentials {
@@ -21,6 +22,7 @@ export interface User {
   email: string;
   phone: string;
   role: string;
+  roles?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -114,12 +116,8 @@ export const useLogin = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Login failed",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Login failed");
     },
   });
 };
@@ -143,12 +141,8 @@ export const useRegister = () => {
         color: "green",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Registration failed",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Registration failed");
     },
   });
 };
@@ -173,12 +167,8 @@ export const useLogout = () => {
         color: "blue",
       });
     },
-    onError: (error: any) => {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Logout failed",
-        color: "red",
-      });
+    onError: (error: unknown) => {
+      showApiError(error, "Error", "Logout failed");
     },
   });
 };
@@ -194,7 +184,9 @@ export const useCurrentUser = (token: string | null) => {
     queryKey: ["currentUser"],
     queryFn: authAPI.getCurrentUser,
     enabled: !!token && token.length > 0, // Only enable if token exists and is not empty
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    // Roles can change while logged in — keep this fresh.
+    staleTime: 30 * 1000,
+    refetchOnMount: "always",
     retry: (failureCount, error: any) => {
       // Don't retry on 401/403 errors
       if (error.response?.status === 401 || error.response?.status === 403) {

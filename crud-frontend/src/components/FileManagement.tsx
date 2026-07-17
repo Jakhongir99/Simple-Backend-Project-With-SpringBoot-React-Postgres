@@ -28,6 +28,7 @@ import {
   IconEye,
   IconEyeOff,
 } from "@tabler/icons-react";
+import { showApiError } from "../utils/apiErrors";
 import { useAuth } from "../hooks/useAuth";
 import api from "../utils/api";
 import { t } from "i18next";
@@ -143,12 +144,8 @@ const FileManagement: React.FC = () => {
       setUploadForm({ description: "", isPublic: false });
       setSelectedFileForUpload(null);
       loadFiles();
-    } catch (error: any) {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Failed to upload file",
-        color: "red",
-      });
+    } catch (error: unknown) {
+      showApiError(error, "Error", "Failed to upload file");
     } finally {
       setLoading(false);
     }
@@ -172,12 +169,8 @@ const FileManagement: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error) {
-      notifications.show({
-        title: "Error",
-        message: "Failed to download file",
-        color: "red",
-      });
+    } catch (error: unknown) {
+      showApiError(error, "Error", "Failed to download file");
     }
   };
 
@@ -196,12 +189,8 @@ const FileManagement: React.FC = () => {
         color: "green",
       });
       loadFiles();
-    } catch (error) {
-      notifications.show({
-        title: "Error",
-        message: "Failed to delete file",
-        color: "red",
-      });
+    } catch (error: unknown) {
+      showApiError(error, "Error", "Failed to delete file");
     } finally {
       setLoading(false);
     }
@@ -220,12 +209,8 @@ const FileManagement: React.FC = () => {
         color: "green",
       });
       loadFiles();
-    } catch (error) {
-      notifications.show({
-        title: "Error",
-        message: "Failed to update file visibility",
-        color: "red",
-      });
+    } catch (error: unknown) {
+      showApiError(error, "Error", "Failed to update file visibility");
     } finally {
       setLoading(false);
     }
@@ -247,12 +232,8 @@ const FileManagement: React.FC = () => {
       setSelectedFile(null);
       setUploadForm({ description: "", isPublic: false });
       loadFiles();
-    } catch (error: any) {
-      notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Failed to update file",
-        color: "red",
-      });
+    } catch (error: unknown) {
+      showApiError(error, "Error", "Failed to update file");
     } finally {
       setLoading(false);
     }

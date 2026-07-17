@@ -21,6 +21,7 @@ import {
   Container,
   Grid,
   Flex,
+  Divider,
 } from "@mantine/core";
 import {
   IconPlus,
@@ -31,6 +32,7 @@ import {
   IconCheck,
   IconX,
 } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslations } from "../hooks/useTranslations";
 
@@ -71,6 +73,13 @@ interface User {
 const RoleManagement: React.FC = () => {
   const { token } = useAuth();
   const { t } = useTranslations();
+  const queryClient = useQueryClient();
+
+  const refreshCurrentUser = () => {
+    // Role changes affect @PreAuthorize AND the hiring action buttons —
+    // force /auth/me to reload so UI sees the new roles immediately.
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+  };
   const [roles, setRoles] = useState<Role[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -101,6 +110,12 @@ const RoleManagement: React.FC = () => {
     userId: 0,
     roleIds: [],
   });
+
+  // Manage user roles (give / take)
+  const [openManageModal, setOpenManageModal] = useState(false);
+  const [manageUserId, setManageUserId] = useState<number>(0);
+  const [manageUserRoles, setManageUserRoles] = useState<Role[]>([]);
+  const [addRoleIds, setAddRoleIds] = useState<number[]>([]);
 
   const API_BASE_URL = "http://localhost:8080/api";
 
@@ -244,6 +259,7 @@ const RoleManagement: React.FC = () => {
         setOpenAssignModal(false);
         setAssignForm({ userId: 0, roleIds: [] });
         fetchRoles();
+        refreshCurrentUser();
       } else {
         throw new Error("Failed to assign roles");
       }
@@ -265,6 +281,84 @@ const RoleManagement: React.FC = () => {
 
   const handleAssignClick = () => {
     setOpenAssignModal(true);
+  };
+
+  const fetchUserRoles = async (userId: number) => {
+    if (!userId) {
+      setManageUserRoles([]);
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/roles/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setManageUserRoles(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user roles:", error);
+    }
+  };
+
+  const handleSelectManageUser = (userId: number) => {
+    setManageUserId(userId);
+    setAddRoleIds([]);
+    fetchUserRoles(userId);
+  };
+
+  const handleGiveRoles = async () => {
+    if (!manageUserId || addRoleIds.length === 0) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/roles/assign`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: manageUserId, roleIds: addRoleIds }),
+      });
+      if (response.ok) {
+        showNotification("Rol berildi", "success");
+        setAddRoleIds([]);
+        fetchUserRoles(manageUserId);
+        fetchRoles();
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      } else {
+        throw new Error("Failed to give roles");
+      }
+    } catch (error) {
+      console.error("Error giving roles:", error);
+      showNotification("Rol berishda xatolik", "error");
+    }
+  };
+
+  const handleTakeRole = async (roleId: number) => {
+    if (!manageUserId) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/roles/user/${manageUserId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([roleId]),
+      });
+      if (response.ok) {
+        showNotification("Rol olib tashlandi", "success");
+        fetchUserRoles(manageUserId);
+        fetchRoles();
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      } else {
+        throw new Error("Failed to take role");
+      }
+    } catch (error) {
+      console.error("Error taking role:", error);
+      showNotification("Rol olishda xatolik", "error");
+    }
   };
 
   const showNotification = (message: string, type: "success" | "error") => {
@@ -338,6 +432,19 @@ const RoleManagement: React.FC = () => {
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Flex gap="sm" justify="flex-end">
+              <Button
+                variant="filled"
+                color="grape"
+                leftSection={<IconUserCheck size={16} />}
+                onClick={() => {
+                  setManageUserId(0);
+                  setManageUserRoles([]);
+                  setAddRoleIds([]);
+                  setOpenManageModal(true);
+                }}
+              >
+                Rol berish / olish
+              </Button>
               <Button
                 variant="outline"
                 leftSection={<IconUserCheck size={16} />}
@@ -502,6 +609,102 @@ const RoleManagement: React.FC = () => {
               Assign
             </Button>
           </Group>
+        </Stack>
+      </Modal>
+
+      {/* Manage User Roles Modal (give / take) */}
+      <Modal
+        opened={openManageModal}
+        onClose={() => setOpenManageModal(false)}
+        title="Foydalanuvchi rollarini boshqarish"
+        size="lg"
+        centered
+      >
+        <Stack>
+          <Select
+            label="Foydalanuvchi"
+            placeholder="Foydalanuvchini tanlang"
+            searchable
+            data={users.map((user) => ({
+              value: user.id.toString(),
+              label: `${user.name} (${user.email})`,
+            }))}
+            value={manageUserId ? manageUserId.toString() : null}
+            onChange={(value) => handleSelectManageUser(parseInt(value || "0"))}
+          />
+
+          {manageUserId > 0 && (
+            <>
+              <div>
+                <Text size="sm" fw={500} mb={4}>
+                  Hozirgi rollar
+                </Text>
+                {manageUserRoles.length === 0 ? (
+                  <Text size="sm" c="dimmed">
+                    Rol berilmagan.
+                  </Text>
+                ) : (
+                  <Group gap="xs">
+                    {manageUserRoles.map((role) => (
+                      <Badge
+                        key={role.id}
+                        size="lg"
+                        variant="filled"
+                        color="grape"
+                        rightSection={
+                          <ActionIcon
+                            size="xs"
+                            color="white"
+                            variant="transparent"
+                            onClick={() => handleTakeRole(role.id)}
+                            title="Rolni olib tashlash"
+                          >
+                            <IconX size={12} />
+                          </ActionIcon>
+                        }
+                      >
+                        {role.name}
+                      </Badge>
+                    ))}
+                  </Group>
+                )}
+              </div>
+
+              <Divider />
+
+              <MultiSelect
+                label="Rol berish"
+                placeholder="Qo'shiladigan rollarni tanlang"
+                data={roles
+                  .filter(
+                    (role) =>
+                      role.isActive &&
+                      !manageUserRoles.some((ur) => ur.id === role.id)
+                  )
+                  .map((role) => ({
+                    value: role.id.toString(),
+                    label: role.name,
+                  }))}
+                value={addRoleIds.map((id) => id.toString())}
+                onChange={(values) =>
+                  setAddRoleIds(values.map((v) => parseInt(v)))
+                }
+              />
+              <Group justify="flex-end">
+                <Button
+                  onClick={handleGiveRoles}
+                  disabled={addRoleIds.length === 0}
+                >
+                  Rol berish
+                </Button>
+              </Group>
+
+              <Text size="xs" c="dimmed">
+                Eslatma: rol o'zgarishi keyingi so'rovda darhol kuchga kiradi
+                (qayta login shart emas).
+              </Text>
+            </>
+          )}
         </Stack>
       </Modal>
 

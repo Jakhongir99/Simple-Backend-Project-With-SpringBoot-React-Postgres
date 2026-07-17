@@ -234,6 +234,30 @@ td {
   box-shadow: var(--shadow-xl);
 }
 
+/* Keep AppShell chrome below Modal overlay (project-wide) */
+:root {
+  --app-shell-header-z-index: 100;
+  --app-shell-navbar-z-index: 100;
+  --app-shell-aside-z-index: 100;
+  --app-shell-footer-z-index: 100;
+}
+
+/* Full-screen modal overlay above AppShell chrome (header/navbar/footer) */
+.mantine-Modal-root,
+.mantine-Drawer-root {
+  z-index: 10000 !important;
+}
+
+.mantine-Modal-overlay,
+.mantine-Drawer-overlay {
+  z-index: 10000 !important;
+}
+
+.mantine-Modal-inner,
+.mantine-Drawer-inner {
+  z-index: 10001 !important;
+}
+
 /* Button variants */
 .btn-primary {
   background-color: var(--accent-color);

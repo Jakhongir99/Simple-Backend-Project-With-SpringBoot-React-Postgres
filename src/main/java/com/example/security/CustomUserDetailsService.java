@@ -31,25 +31,31 @@ public class CustomUserDetailsService implements UserDetailsService {
         
         log.info("User found: {} with role: {}", user.getEmail(), user.getRole());
         
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        
-        // Add the old role if it exists
+        // Use a Set to avoid duplicate authorities (enum role + dynamic role with same name)
+        java.util.Set<SimpleGrantedAuthority> authoritySet = new java.util.LinkedHashSet<>();
+
+        // 1) Primary enum role (e.g. ROLE_USER / ROLE_ADMIN)
         if (user.getRole() != null) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+            authoritySet.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
         }
-        
-        // For now, skip the new roles system until tables are properly created
-        // TODO: Re-enable when roles table is stable
-        // if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-        //     authorities.addAll(user.getRoles().stream()
-        //             .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-        //             .collect(Collectors.toList()));
-        // }
-        
-        // If no roles found, add a default USER role
-        if (authorities.isEmpty()) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+        // 2) Dynamic roles from the roles table (EAGER-fetched on the User entity).
+        //    A user assigned the "HR" role gets ROLE_HR, etc. This makes @PreAuthorize
+        //    checks like hasRole('HR') work for assigned dynamic roles.
+        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+            user.getRoles().stream()
+                    .filter(role -> role.getName() != null
+                            && (role.getIsActive() == null || role.getIsActive()))
+                    .forEach(role -> authoritySet.add(
+                            new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase())));
         }
+
+        // 3) Fallback default
+        if (authoritySet.isEmpty()) {
+            authoritySet.add(new SimpleGrantedAuthority("ROLE_USER"));
+        }
+
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>(authoritySet);
         
         log.info("User authorities: {}", authorities);
         

@@ -1,14 +1,13 @@
 import React from "react";
-import { AppShell, Button, Group, Text, Stack, Divider } from "@mantine/core";
+import { AppShell, Button, Group, Text, Stack } from "@mantine/core";
 import {
   IconUsers,
-  IconBriefcase,
-  IconBuilding,
-  IconFileText,
   IconPalette,
   IconLanguage,
   IconUpload,
   IconShield,
+  IconUserCheck,
+  IconSitemap,
 } from "@tabler/icons-react";
 import { useTranslations } from "../hooks/useTranslations";
 
@@ -101,45 +100,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
           </Button>
 
           <Button
-            variant={currentPage === "departments" ? "filled" : "light"}
-            leftSection={<IconBuilding size={16} />}
-            justify="flex-start"
-            fullWidth
-            size="md"
-            radius="xl"
-            onClick={() => onNavigate?.("departments")}
-            style={getButtonStyles(currentPage === "departments")}
-          >
-            {t("nav.departments")}
-          </Button>
-
-          <Button
-            variant={currentPage === "jobs" ? "filled" : "light"}
-            leftSection={<IconBriefcase size={16} />}
-            justify="flex-start"
-            fullWidth
-            size="md"
-            radius="xl"
-            onClick={() => onNavigate?.("jobs")}
-            style={getButtonStyles(currentPage === "jobs")}
-          >
-            {t("nav.jobs")}
-          </Button>
-
-          <Button
-            variant={currentPage === "employees" ? "filled" : "light"}
-            leftSection={<IconUsers size={16} />}
-            justify="flex-start"
-            fullWidth
-            size="md"
-            radius="xl"
-            onClick={() => onNavigate?.("employees")}
-            style={getButtonStyles(currentPage === "employees")}
-          >
-            {t("nav.employees")}
-          </Button>
-
-          <Button
             variant={currentPage === "files" ? "filled" : "light"}
             leftSection={<IconUpload size={16} />}
             justify="flex-start"
@@ -176,6 +136,32 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
             style={getButtonStyles(currentPage === "roles")}
           >
             Roles
+          </Button>
+
+          <Button
+            variant={currentPage === "hiring" ? "filled" : "light"}
+            leftSection={<IconUserCheck size={16} />}
+            justify="flex-start"
+            fullWidth
+            size="md"
+            radius="xl"
+            onClick={() => onNavigate?.("hiring")}
+            style={getButtonStyles(currentPage === "hiring")}
+          >
+            {t("nav.hiring", "Ishga olish")}
+          </Button>
+
+          <Button
+            variant={currentPage === "processes" ? "filled" : "light"}
+            leftSection={<IconSitemap size={16} />}
+            justify="flex-start"
+            fullWidth
+            size="md"
+            radius="xl"
+            onClick={() => onNavigate?.("processes")}
+            style={getButtonStyles(currentPage === "processes")}
+          >
+            {t("nav.processes", "Jarayonlar")}
           </Button>
 
           <Button

@@ -41,6 +41,7 @@ interface UserManagementProps {
   loading: boolean;
   currentPage: number;
   totalPages: number;
+  fieldErrors?: Record<string, string>;
   onSubmit: (e: React.FormEvent) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
@@ -57,12 +58,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   loading,
   currentPage,
   totalPages,
+  fieldErrors = {},
   onSubmit,
   onEdit,
   onDelete,
   onRefresh,
   onPageChange,
 }) => {
+  const updateField = (field: keyof User, value: string) => {
+    setCurrentUser({ ...currentUser, [field]: value });
+  };
+
   return (
     <Grid gutter="lg" mt="md">
       <Grid.Col span={{ base: 12, lg: 4 }}>
@@ -82,46 +88,30 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 <TextInput
                   label="Name"
                   value={currentUser.name}
-                  onChange={(e) =>
-                    setCurrentUser({
-                      ...currentUser,
-                      name: e.target.value,
-                    })
-                  }
+                  error={fieldErrors.name}
+                  onChange={(e) => updateField("name", e.target.value)}
                   required
                 />
                 <TextInput
                   label="Email"
                   type="email"
                   value={currentUser.email}
-                  onChange={(e) =>
-                    setCurrentUser({
-                      ...currentUser,
-                      email: e.target.value,
-                    })
-                  }
+                  error={fieldErrors.email}
+                  onChange={(e) => updateField("email", e.target.value)}
                   required
                 />
                 <PasswordInput
                   label="Password"
                   value={currentUser.password}
-                  onChange={(e) =>
-                    setCurrentUser({
-                      ...currentUser,
-                      password: e.target.value,
-                    })
-                  }
-                  required
+                  error={fieldErrors.password}
+                  onChange={(e) => updateField("password", e.target.value)}
+                  required={!isEditing}
                 />
                 <TextInput
                   label="Phone"
                   value={currentUser.phone || ""}
-                  onChange={(e) =>
-                    setCurrentUser({
-                      ...currentUser,
-                      phone: e.target.value,
-                    })
-                  }
+                  error={fieldErrors.phone}
+                  onChange={(e) => updateField("phone", e.target.value)}
                 />
                 <Group gap="xs">
                   <Button

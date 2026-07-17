@@ -68,7 +68,8 @@ export const Layout: React.FC<LayoutProps> = ({
             boxShadow: `var(--shadow)`,
             transition:
               "background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
-            zIndex: 1000,
+            // Keep below Mantine Modal (z-index 10000) so overlay covers the whole app
+            zIndex: 100,
           }}
         >
           <Header
@@ -86,7 +87,7 @@ export const Layout: React.FC<LayoutProps> = ({
             boxShadow: `var(--shadow)`,
             transition:
               "background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
-            zIndex: 999,
+            zIndex: 100,
           }}
         >
           <Navbar onNavigate={onNavigate} currentPage={currentPage} />
@@ -122,7 +123,7 @@ export const Layout: React.FC<LayoutProps> = ({
             color: `var(--text-secondary)`,
             transition:
               "background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease",
-            zIndex: 998,
+            zIndex: 100,
           }}
         >
           <Footer />

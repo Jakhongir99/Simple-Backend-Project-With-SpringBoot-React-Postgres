@@ -1,0 +1,18 @@
+/* Highlight markers for the hiring BPMN diagram */
+.djs-element.hl-active .djs-visual > :nth-child(1) {
+  stroke: #f08c00 !important;
+  fill: #ffec99 !important;
+  stroke-width: 2px !important;
+}
+
+.djs-element.hl-done .djs-visual > :nth-child(1) {
+  stroke: #2f9e44 !important;
+  fill: #b2f2bb !important;
+  stroke-width: 2px !important;
+}
+
+.djs-element.hl-rejected .djs-visual > :nth-child(1) {
+  stroke: #e03131 !important;
+  fill: #ffc9c9 !important;
+  stroke-width: 2px !important;
+}

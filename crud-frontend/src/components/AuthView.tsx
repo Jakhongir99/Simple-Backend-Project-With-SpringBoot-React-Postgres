@@ -24,6 +24,11 @@ import {
 } from "@tabler/icons-react";
 import { useLogin, useRegister } from "../hooks";
 import { useTheme } from "../contexts/ThemeContext";
+import {
+  clearFieldError,
+  getApiErrorMessage,
+  getFieldErrors,
+} from "../utils/apiErrors";
 
 interface AuthViewProps {
   onSuccess: (token: string) => void;
@@ -38,6 +43,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerPhone, setRegisterPhone] = useState("");
+  const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
+  const [registerErrors, setRegisterErrors] = useState<Record<string, string>>(
+    {}
+  );
 
   const { theme, toggleTheme, isDark, isLight } = useTheme();
 
@@ -70,14 +79,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
 
   const doLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginErrors({});
     loginMutation.mutate(
       { email: loginEmail, password: loginPassword },
       {
         onSuccess: (data) => {
           onSuccess(data.token);
         },
-        onError: (error: any) => {
-          onError(error.response?.data?.message || "Login failed");
+        onError: (error: unknown) => {
+          const fields = getFieldErrors(error);
+          setLoginErrors(fields);
+          onError(getApiErrorMessage(error, "Login failed"));
         },
       }
     );
@@ -85,6 +97,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
 
   const doRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    setRegisterErrors({});
     registerMutation.mutate(
       {
         name: registerName,
@@ -96,8 +109,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
         onSuccess: (data) => {
           onSuccess(data.token);
         },
-        onError: (error: any) => {
-          onError(error.response?.data?.message || "Registration failed");
+        onError: (error: unknown) => {
+          const fields = getFieldErrors(error);
+          setRegisterErrors(fields);
+          onError(getApiErrorMessage(error, "Registration failed"));
         },
       }
     );
@@ -259,7 +274,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
             {/* Segmented Control */}
             <SegmentedControl
               value={activeTab}
-              onChange={setActiveTab}
+              onChange={(value) => {
+                setActiveTab(value);
+                setLoginErrors({});
+                setRegisterErrors({});
+              }}
               data={[
                 { label: "Sign In", value: "login" },
                 { label: "Sign Up", value: "register" },
@@ -359,7 +378,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                     label="Email Address"
                     type="email"
                     value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
+                    onChange={(e) => {
+                      setLoginEmail(e.target.value);
+                      setLoginErrors((prev) => clearFieldError(prev, "email"));
+                    }}
+                    error={loginErrors.email}
                     required
                     leftSection={<IconMail size={20} />}
                     placeholder="Enter your email address"
@@ -390,7 +413,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                   <PasswordInput
                     label="Password"
                     value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
+                    onChange={(e) => {
+                      setLoginPassword(e.target.value);
+                      setLoginErrors((prev) =>
+                        clearFieldError(prev, "password")
+                      );
+                    }}
+                    error={loginErrors.password}
                     required
                     leftSection={<IconLock size={20} />}
                     placeholder="Enter your password"
@@ -457,7 +486,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                   <TextInput
                     label="Full Name"
                     value={registerName}
-                    onChange={(e) => setRegisterName(e.target.value)}
+                    onChange={(e) => {
+                      setRegisterName(e.target.value);
+                      setRegisterErrors((prev) => clearFieldError(prev, "name"));
+                    }}
+                    error={registerErrors.name}
                     required
                     leftSection={<IconUser size={20} />}
                     placeholder="Enter your full name"
@@ -489,7 +522,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                     label="Email Address"
                     type="email"
                     value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    onChange={(e) => {
+                      setRegisterEmail(e.target.value);
+                      setRegisterErrors((prev) =>
+                        clearFieldError(prev, "email")
+                      );
+                    }}
+                    error={registerErrors.email}
                     required
                     leftSection={<IconMail size={20} />}
                     placeholder="Enter your email address"
@@ -520,7 +559,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                   <PasswordInput
                     label="Password"
                     value={registerPassword}
-                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    onChange={(e) => {
+                      setRegisterPassword(e.target.value);
+                      setRegisterErrors((prev) =>
+                        clearFieldError(prev, "password")
+                      );
+                    }}
+                    error={registerErrors.password}
                     required
                     leftSection={<IconLock size={20} />}
                     placeholder="Create a strong password"
@@ -551,7 +596,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
                   <TextInput
                     label="Phone Number"
                     value={registerPhone}
-                    onChange={(e) => setRegisterPhone(e.target.value)}
+                    onChange={(e) => {
+                      setRegisterPhone(e.target.value);
+                      setRegisterErrors((prev) => clearFieldError(prev, "phone"));
+                    }}
+                    error={registerErrors.phone}
                     leftSection={<IconPhone size={20} />}
                     placeholder="Enter your phone number"
                     size="lg"

@@ -31,8 +31,31 @@ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <LanguageProvider>
-        <MantineProvider defaultColorScheme="light">
-          <Notifications position="top-right" />
+        <MantineProvider
+          defaultColorScheme="light"
+          theme={{
+            components: {
+              // Ensure every Modal overlays the full app (header/navbar/footer)
+              Modal: {
+                defaultProps: {
+                  withinPortal: true,
+                  zIndex: 10000,
+                  overlayProps: {
+                    backgroundOpacity: 0.55,
+                    blur: 2,
+                  },
+                },
+              },
+              Drawer: {
+                defaultProps: {
+                  withinPortal: true,
+                  zIndex: 10000,
+                },
+              },
+            },
+          }}
+        >
+          <Notifications position="top-right" zIndex={11000} />
           <BrowserRouter>
             <App />
           </BrowserRouter>
