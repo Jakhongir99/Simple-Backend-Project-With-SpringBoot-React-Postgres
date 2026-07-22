@@ -1,10 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
 
 export type Language = "en" | "ru" | "uz";
 
@@ -31,7 +26,7 @@ interface LanguageProviderProps {
 }
 
 // Translation dictionaries
-const translations = {
+const translations: Record<Language, Record<string, string>> = {
   en: {
     // Common
     "common.loading": "Loading...",

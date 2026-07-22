@@ -2,6 +2,8 @@
 
 ## 1. Jenkins ishga tushirish
 
+**Docker Desktop** ishga tushirilgan bo'lishi shart. Aks holda `dockerDesktopLinuxEngine` xatosi chiqadi.
+
 ```bash
 docker compose -f docker-compose.jenkins.yml up -d
 ```

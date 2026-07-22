@@ -1,7 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-import api from "../utils/api";
 
 i18n
   .use(LanguageDetector)
@@ -60,7 +59,7 @@ i18n
     // Enable missing key saving
     saveMissing: false,
     saveMissingTo: "all", // Save to all languages
-    missingKeyHandler: async (lng, ns, key, fallbackValue) => {
+    missingKeyHandler: async (lng, _ns, key, fallbackValue) => {
       console.log(
         `Missing translation key: ${key} for language: ${lng}, fallback: ${fallbackValue}`
       );
@@ -93,9 +92,7 @@ i18n
         }));
 
         // Filter out translations that might already exist to avoid constraint violations
-        const newTranslations = translations.filter((translation) => {
-          // For now, we'll try to create all translations and let the backend handle duplicates
-          // The backend should now skip existing translations instead of throwing errors
+        const newTranslations = translations.filter((_translation) => {
           return true;
         });
 

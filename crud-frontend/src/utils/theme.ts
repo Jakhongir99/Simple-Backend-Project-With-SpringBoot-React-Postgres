@@ -187,7 +187,7 @@ export const saveThemeToStorage = (theme: "light" | "dark"): void => {
 export const getThemeFromStorage = (): "light" | "dark" | null => {
   if (typeof window !== "undefined") {
     const saved = localStorage.getItem("theme");
-    return isValidTheme(saved) ? saved : null;
+    return saved && isValidTheme(saved) ? saved : null;
   }
   return null;
 };

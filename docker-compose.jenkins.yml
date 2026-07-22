@@ -1,4 +1,5 @@
 # Jenkins + Docker CI/CD stack
+# Requires Docker Desktop running.
 # Start: docker compose -f docker-compose.jenkins.yml up -d
 # Jenkins UI: http://localhost:8081
 # Initial admin password: docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
@@ -21,21 +22,8 @@ services:
     networks:
       - ci-network
 
-  dind:
-    image: docker:27-dind
-    container_name: jenkins-docker-dind
-    privileged: true
-    restart: unless-stopped
-    environment:
-      DOCKER_TLS_CERTDIR: ""
-    volumes:
-      - dind_data:/var/lib/docker
-    networks:
-      - ci-network
-
 volumes:
   jenkins_home:
-  dind_data:
 
 networks:
   ci-network:
