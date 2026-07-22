@@ -135,6 +135,7 @@ Hammasi (App + Jenkins):
 | Build umuman boshlanmaydi | Poll SCM + `H/2 * * * *` belgilanganmi? |
 | Port band | `.\scripts\stop-dev.ps1` — local va Docker birga emas |
 | `container name ... already in use` | Eski stack qolgan. `.\scripts\stop-docker.ps1` yoki Build Now (yangi Jenkinsfile avval tozalaydi) |
+| Disk to'ldi / `no space left` | Eski image'lar. Pipeline success'dan keyin oxirgi 3 tag saqlab tozalaydi; qo'lda: `docker system prune -af` (ehtiyot) |
 
 ---
 

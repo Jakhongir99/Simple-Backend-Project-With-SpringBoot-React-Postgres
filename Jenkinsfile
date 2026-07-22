@@ -79,6 +79,25 @@ pipeline {
     post {
         success {
             echo "Pipeline muvaffaqiyatli. Frontend: http://localhost:3000 Backend: http://localhost:8080"
+            // Disk to'lmasin: eski build taglari + dangling/build-cache tozalanadi.
+            // latest va oxirgi 3 BUILD_NUMBER saqlanadi (rollback uchun).
+            sh '''
+                set +e
+                KEEP=3
+                for REPO in java-simple-backend java-simple-frontend; do
+                  docker images "$REPO" --format '{{.Tag}}' \
+                    | grep -E '^[0-9]+$' \
+                    | sort -n \
+                    | head -n -${KEEP} \
+                    | while read -r TAG; do
+                        echo "Removing $REPO:$TAG"
+                        docker rmi "$REPO:$TAG" 2>/dev/null || true
+                      done
+                done
+                docker image prune -f
+                docker builder prune -f --filter until=72h
+                docker system df
+            '''
         }
         failure {
             echo 'Pipeline xato bilan yakunlandi. Console Output ni tekshiring.'
