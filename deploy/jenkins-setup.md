@@ -1,79 +1,147 @@
-# Jenkins + Docker CI/CD
+# Jenkins CI/CD — qismlarga bo'lingan qo'llanma
 
-## 1. Jenkins ishga tushirish
+Loyiha: push → Jenkins avtomatik test → Docker build → deploy
 
-**Docker Desktop** ishga tushirilgan bo'lishi shart. Aks holda `dockerDesktopLinuxEngine` xatosi chiqadi.
+> Lokal Jenkins (`localhost:8081`) uchun **Poll SCM** ishlatamiz.
+> GitHub Webhook lokalga to'g'ridan yetib bormaydi (ngrok kerak bo'ladi).
+
+---
+
+## QISM 0 — Jenkins ishlayaptimi?
 
 ```powershell
 .\run-jenkins.ps1
 ```
 
-yoki:
+- UI: http://localhost:8081
+- Parol: script chiqaradi yoki  
+  `docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword`
 
-```bash
-docker compose -f docker-compose.jenkins.yml up -d
+**Muhim:** eski Jenkins image'da `docker` yo'q edi (exit 127).
+`run-jenkins.ps1` endi Docker CLI bilan **qayta build** qiladi.
+
+---
+
+## QISM 1 — Pipeline job sozlash (bir marta)
+
+1. Jenkins → **java-simple-pipeline** → **Настройки (Configure)**
+2. Pastga scroll → **Pipeline**
+3. To'ldiring:
+
+| Maydon | Qiymat |
+|--------|--------|
+| Definition | **Pipeline script from SCM** |
+| SCM | **Git** |
+| Repository URL | `https://github.com/Jakhongir99/Simple-Backend-Project-With-SpringBoot-React-Postgres.git` |
+| Branch Specifier | `*/main`  ← `master` emas! |
+| Script Path | `Jenkinsfile` |
+
+4. Hali **Save** bosmang — QISM 2 ga o'ting.
+
+---
+
+## QISM 2 — Har push'da avtomatik ishga tushirish
+
+**Triggers / Триггеры** bo'limida:
+
+1. Belgilang: **Опрашивать SCM об изменениях** (Poll SCM)
+2. Schedule maydoniga yozing:
+
+```
+H/2 * * * *
 ```
 
-Jenkins UI: http://localhost:8081
+Bu = taxminan **har 2 daqiqada** GitHub'ni tekshiradi.
+Push qilsangiz, 0–2 daqiqa ichida yangi build boshlanadi.
 
-### Administrator parol qayerdan?
+3. Endi **Save** bosing.
 
-Script o'zi chiqaradi. Qo'lda:
+### Nima uchun Webhook emas?
 
-```powershell
-docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+| Usul | Lokal Jenkins |
+|------|----------------|
+| Poll SCM | Ishlaydi (tavsiya) |
+| GitHub Webhook | `localhost` ga internetdan kira olmaydi |
+
+Keyin serverga chiqarganda Webhook qo'shiladi.
+
+---
+
+## QISM 3 — Birinchi marta qo'lda tekshirish
+
+1. **Собрать сейчас (Build Now)** bosing
+2. Build History'da #3 (yoki keyingi raqam) chiqadi
+3. Ustiga bosib → **Console Output**
+
+Kutiladigan bosqichlar (`Jenkinsfile`):
+
+```
+1. Checkout          → GitHub'dan kod
+2. Test              → mvn test
+3. Build Backend     → Docker image
+4. Build Frontend    → Docker image
+5. Deploy Production → docker compose prod up
 ```
 
-Shu uzun kodni Jenkins sahifasidagi "Administrator password" maydoniga joylang → **Continue**.
+Yashil ✅ = muvaffaqiyat.
+Qizil ❌ = Console Output'dagi xatoni o'qing.
+
+---
+
+## QISM 4 — Auto deploy sinovi (push)
+
+1. Kodda kichik o'zgarish qiling (masalan README'ga 1 qator)
+2. Commit + push `main` ga
+3. 1–2 daqiqa kuting
+4. Jenkins'da **yangi build** avtomatik chiqishi kerak
+5. Success bo'lsa: http://localhost:3000 yangilangan app
+
+---
+
+## QISM 5 — Kundalik ish tartibi
+
+```
+Kod yozdingiz
+    ↓
+git push origin main
+    ↓
+Jenkins Poll SCM sezadi (≤2 daqiqa)
+    ↓
+Test → Build → Deploy
+    ↓
+Brauzerda localhost:3000 / 8080
+```
 
 To'xtatish:
 
 ```powershell
-.\stop-jenkins.ps1
+.\stop-all.ps1
 ```
 
-## 2. Jenkins pluginlar
+Hammasi (App + Jenkins):
 
-Setup wizardda tanlang:
-
-- Docker Pipeline
-- Docker
-- Git
-- Pipeline
-- Credentials Binding
-
-## 3. Pipeline yaratish
-
-1. **New Item** → `java-simple-pipeline` → **Pipeline**
-2. **Pipeline** → Definition: **Pipeline script from SCM**
-3. SCM: **Git**
-4. Repository URL: `https://github.com/Jakhongir99/Simple-Backend-Project-With-SpringBoot-React-Postgres.git`
-5. Branch: `*/main`
-6. Script Path: `Jenkinsfile`
-7. Save → **Build Now**
-
-## 4. Production deploy (manual)
-
-```bash
-cp .env.prod.example .env.prod
-# .env.prod ichidagi parollarni o'zgartiring
-
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+```powershell
+.\run-all.ps1
 ```
 
-## 5. URLlar
+---
+
+## Xatolar tez yordam
+
+| Xato | Yechim |
+|------|--------|
+| `couldn't find remote ref master` | Branch = `*/main` |
+| `exit code 127` / docker not found | `.\run-jenkins.ps1` (rebuild) |
+| Build umuman boshlanmaydi | Poll SCM + `H/2 * * * *` belgilanganmi? |
+| Port band | `.\stop-dev.ps1` — local va Docker birga emas |
+
+---
+
+## URLlar
 
 | Service | URL |
 |---------|-----|
-| Frontend (prod) | http://localhost:3000 |
-| Backend API | http://localhost:8080/api |
-| Health | http://localhost:8080/actuator/health |
+| Frontend | http://localhost:3000 |
+| Backend | http://localhost:8080 |
+| Swagger | http://localhost:8080/swagger-ui/index.html |
 | Jenkins | http://localhost:8081 |
-
-## 6. Pipeline bosqichlari
-
-1. Checkout
-2. Test (Maven in Docker)
-3. Build backend image
-4. Build frontend image
-5. Deploy (`main` branchda `docker-compose.prod.yml`)

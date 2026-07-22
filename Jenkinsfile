@@ -15,21 +15,20 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('1. Checkout') {
             steps {
+                echo 'GitHub dan kod olinmoqda...'
                 checkout scm
             }
         }
 
-        stage('Test') {
+        stage('2. Test') {
             steps {
-                // Exit 127 oldin: Jenkins ichida docker CLI yo'q edi.
-                // Endi docker bor. Workspace ni tar bilan Maven konteyneriga uzatamiz
-                // (Docker Desktop + named volume path muammosidan qochamiz).
+                echo 'Maven testlar ishga tushirilmoqda...'
+                // Workspace ni tar bilan Maven konteyneriga uzatamiz
                 sh '''
                     set -e
                     docker version
-                    echo "Running Maven tests..."
                     tar --exclude=./.git --exclude=./crud-frontend/node_modules --exclude=./target -cf - . \
                       | docker run --rm -i \
                           -w /app \
@@ -39,20 +38,23 @@ pipeline {
             }
         }
 
-        stage('Build Backend Image') {
+        stage('3. Build Backend Image') {
             steps {
+                echo "Backend Docker image: ${BACKEND_IMAGE}:${IMAGE_TAG}"
                 sh "docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -t ${BACKEND_IMAGE}:latest ."
             }
         }
 
-        stage('Build Frontend Image') {
+        stage('4. Build Frontend Image') {
             steps {
+                echo "Frontend Docker image: ${FRONTEND_IMAGE}:${IMAGE_TAG}"
                 sh "docker build -f Dockerfile.frontend -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -t ${FRONTEND_IMAGE}:latest ."
             }
         }
 
-        stage('Deploy Production') {
+        stage('5. Deploy Production') {
             steps {
+                echo 'docker-compose.prod.yml orqali deploy...'
                 sh '''
                     export BACKEND_IMAGE_TAG=${IMAGE_TAG}
                     export FRONTEND_IMAGE_TAG=${IMAGE_TAG}
