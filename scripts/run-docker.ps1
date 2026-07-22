@@ -8,6 +8,12 @@ Set-Location $root
 
 Write-Host "=== Java Simple Docker Runner ===" -ForegroundColor Cyan
 
+docker info 1>$null 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nDocker Desktop ishlamayapti. Avval uni oching, keyin qayta ishga tushiring." -ForegroundColor Red
+    exit 1
+}
+
 # Free local ports if run-dev is still running
 Write-Host "`n[1/3] Lokal run-dev tozalanmoqda (agar bor bolsa)..." -ForegroundColor Yellow
 & (Join-Path $scriptsDir "stop-dev.ps1") | Out-Null

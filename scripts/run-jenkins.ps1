@@ -8,6 +8,12 @@ Set-Location $root
 
 Write-Host "=== Jenkins Runner ===" -ForegroundColor Cyan
 
+docker info 1>$null 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nDocker Desktop ishlamayapti. Avval uni oching, keyin qayta ishga tushiring." -ForegroundColor Red
+    exit 1
+}
+
 Write-Host "`n[1/2] Jenkins image build + start..." -ForegroundColor Yellow
 docker compose -p java_simple -f docker-compose.jenkins.yml up -d --build
 if ($LASTEXITCODE -ne 0) {

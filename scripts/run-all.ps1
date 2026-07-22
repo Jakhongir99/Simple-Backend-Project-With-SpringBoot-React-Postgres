@@ -16,7 +16,15 @@ Write-Host "=== Java Simple ALL Runner ===" -ForegroundColor Cyan
 Write-Host "Docker App + Jenkins (local run-dev emas)" -ForegroundColor DarkGray
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "Docker topilmadi. Avval Docker Desktop ni yoqing." -ForegroundColor Red
+    Write-Host "Docker CLI topilmadi. Docker Desktop o'rnatilganligini tekshiring." -ForegroundColor Red
+    exit 1
+}
+docker info 1>$null 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nDocker Desktop ishlamayapti (daemon o'chiq)." -ForegroundColor Red
+    Write-Host "  1) Start menu dan 'Docker Desktop' ni oching" -ForegroundColor Yellow
+    Write-Host "  2) Pastki o'ngda whale ikonkasi yashil bo'lguncha kuting" -ForegroundColor Yellow
+    Write-Host "  3) Qayta: .\scripts\run-all.ps1" -ForegroundColor Yellow
     exit 1
 }
 
