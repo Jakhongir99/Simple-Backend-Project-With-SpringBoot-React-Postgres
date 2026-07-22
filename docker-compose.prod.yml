@@ -37,6 +37,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    pull_policy: build
     container_name: java-simple-backend-prod
     restart: unless-stopped
     depends_on:
@@ -70,6 +71,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+    pull_policy: build
     container_name: java-simple-frontend-prod
     restart: unless-stopped
     depends_on:

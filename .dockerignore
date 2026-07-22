@@ -1,0 +1,16 @@
+target/
+.git/
+.idea/
+.vscode/
+uploads/
+logs/
+*.md
+.env
+.env.prod
+application-local.properties
+
+crud-frontend/node_modules/
+crud-frontend/dist/
+
+**/.DS_Store
+**/Thumbs.db
