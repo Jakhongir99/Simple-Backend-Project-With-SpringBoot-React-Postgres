@@ -51,6 +51,22 @@ createRoot(document.getElementById("root")!).render(
                   zIndex: 10000,
                 },
               },
+              // Modal zIndex=10000 — dropdown undan yuqori bo'lishi shart
+              Select: {
+                defaultProps: {
+                  comboboxProps: { withinPortal: true, zIndex: 11000 },
+                },
+              },
+              MultiSelect: {
+                defaultProps: {
+                  comboboxProps: { withinPortal: true, zIndex: 11000 },
+                },
+              },
+              Autocomplete: {
+                defaultProps: {
+                  comboboxProps: { withinPortal: true, zIndex: 11000 },
+                },
+              },
             },
           }}
         >

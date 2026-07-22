@@ -583,6 +583,7 @@ const RoleManagement: React.FC = () => {
             onChange={(value) =>
               setAssignForm({ ...assignForm, userId: parseInt(value || "0") })
             }
+            comboboxProps={{ withinPortal: true, zIndex: 11000 }}
           />
           <MultiSelect
             label="Select Roles"
@@ -597,6 +598,7 @@ const RoleManagement: React.FC = () => {
                 roleIds: values.map((v) => parseInt(v)),
               })
             }
+            comboboxProps={{ withinPortal: true, zIndex: 11000 }}
           />
           <Group justify="flex-end">
             <Button variant="outline" onClick={() => setOpenAssignModal(false)}>
@@ -631,6 +633,7 @@ const RoleManagement: React.FC = () => {
             }))}
             value={manageUserId ? manageUserId.toString() : null}
             onChange={(value) => handleSelectManageUser(parseInt(value || "0"))}
+            comboboxProps={{ withinPortal: true, zIndex: 11000 }}
           />
 
           {manageUserId > 0 && (
@@ -689,6 +692,7 @@ const RoleManagement: React.FC = () => {
                 onChange={(values) =>
                   setAddRoleIds(values.map((v) => parseInt(v)))
                 }
+                comboboxProps={{ withinPortal: true, zIndex: 11000 }}
               />
               <Group justify="flex-end">
                 <Button
