@@ -4,16 +4,32 @@
 
 **Docker Desktop** ishga tushirilgan bo'lishi shart. Aks holda `dockerDesktopLinuxEngine` xatosi chiqadi.
 
+```powershell
+.\run-jenkins.ps1
+```
+
+yoki:
+
 ```bash
 docker compose -f docker-compose.jenkins.yml up -d
 ```
 
 Jenkins UI: http://localhost:8081
 
-Birinchi parol:
+### Administrator parol qayerdan?
 
-```bash
+Script o'zi chiqaradi. Qo'lda:
+
+```powershell
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+Shu uzun kodni Jenkins sahifasidagi "Administrator password" maydoniga joylang → **Continue**.
+
+To'xtatish:
+
+```powershell
+.\stop-jenkins.ps1
 ```
 
 ## 2. Jenkins pluginlar
