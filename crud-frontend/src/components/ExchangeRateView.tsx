@@ -35,7 +35,7 @@ export default function ExchangeRateView() {
           <Title order={2}>Valyuta kursi</Title>
         </Group>
         <Badge color="blue" variant="light">
-          Frankfurter API
+          Open ER API
         </Badge>
       </Group>
 

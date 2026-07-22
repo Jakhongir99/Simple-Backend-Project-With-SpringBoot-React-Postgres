@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,18 +36,37 @@ class ExchangeRateServiceImplTest {
 
     @Test
     void getLatestRate_success_returnsRate() {
-        ReflectionTestUtils.setField(exchangeRateService, "apiUrl", "https://api.frankfurter.app/latest");
+        ReflectionTestUtils.setField(exchangeRateService, "apiUrl", "https://open.er-api.com/v6/latest");
+
+        Map<String, Object> rates = new HashMap<>();
+        rates.put("UZS", 11930.5);
+        rates.put("EUR", 0.87);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("base", "USD");
-        response.put("rates", Collections.singletonMap("UZS", 12500.5));
+        response.put("result", "success");
+        response.put("base_code", "USD");
+        response.put("rates", rates);
 
-        when(restTemplate.getForObject(contains("from=USD"), eq(Map.class))).thenReturn(response);
+        when(restTemplate.getForObject(contains("/USD"), eq(Map.class))).thenReturn(response);
 
         ExchangeRateDto result = exchangeRateService.getLatestRate("usd", "uzs");
 
         assertEquals("USD", result.getBaseCurrency());
         assertEquals("UZS", result.getTargetCurrency());
-        assertEquals(12500.5, result.getRate());
+        assertEquals(11930.5, result.getRate());
+    }
+
+    @Test
+    void getLatestRate_unsupportedCurrency_throws() {
+        ReflectionTestUtils.setField(exchangeRateService, "apiUrl", "https://open.er-api.com/v6/latest");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("result", "success");
+        response.put("rates", new HashMap<String, Object>());
+
+        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenReturn(response);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> exchangeRateService.getLatestRate("USD", "XXX"));
     }
 }

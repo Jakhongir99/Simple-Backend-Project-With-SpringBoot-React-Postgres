@@ -41,8 +41,8 @@ Thumbs.db
 hs_err_pid*
 replay_pid*
 
-# Uploaded user files
-uploads/
+# Logs
+logs/
 
 # Local secrets (OAuth keys, etc.)
 src/main/resources/application-local.properties
