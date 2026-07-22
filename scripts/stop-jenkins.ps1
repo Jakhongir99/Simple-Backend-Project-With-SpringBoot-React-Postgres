@@ -9,7 +9,7 @@ Set-Location $root
 Write-Host "=== Jenkins Stopper ===" -ForegroundColor Cyan
 Write-Host "`nJenkins toxtatilmoqda..." -ForegroundColor Yellow
 
-docker compose -f docker-compose.jenkins.yml down
+docker compose -p java_simple -f docker-compose.jenkins.yml down
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nTayyor. Jenkins toxtatildi." -ForegroundColor Green

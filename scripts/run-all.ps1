@@ -24,22 +24,22 @@ Write-Host "`n[1/4] Lokal run-dev tozalanmoqda (portlar bo'shashi uchun)..." -Fo
 & (Join-Path $scriptsDir "stop-dev.ps1") | Out-Null
 
 Write-Host "`n[2/4] Docker App (prod) ishga tushirilmoqda..." -ForegroundColor Yellow
-docker compose -p java-simple -f docker-compose.prod.yml up -d --build
+docker compose -p java_simple -f docker-compose.prod.yml up -d --build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Docker App start failed." -ForegroundColor Red
     exit 1
 }
 
 Write-Host "`n[3/4] Jenkins ishga tushirilmoqda..." -ForegroundColor Yellow
-docker compose -f docker-compose.jenkins.yml up -d --build
+docker compose -p java_simple -f docker-compose.jenkins.yml up -d --build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Jenkins start failed." -ForegroundColor Red
     exit 1
 }
 
 Write-Host "`n[4/4] Holat:" -ForegroundColor Yellow
-docker compose -p java-simple -f docker-compose.prod.yml ps
-docker compose -f docker-compose.jenkins.yml ps
+docker compose -p java_simple -f docker-compose.prod.yml ps
+docker compose -p java_simple -f docker-compose.jenkins.yml ps
 
 Write-Host "`nTayyor!" -ForegroundColor Green
 Write-Host "  Frontend:  http://localhost:3000"

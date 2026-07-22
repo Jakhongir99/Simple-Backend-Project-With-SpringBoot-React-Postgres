@@ -15,7 +15,7 @@ Write-Host "`n[1/3] Lokal run-dev tozalanmoqda (agar bor bolsa)..." -ForegroundC
 Write-Host "`n[2/3] Docker Compose build + start..." -ForegroundColor Yellow
 Write-Host "  Bu birinchi marta 3-10 daqiqa olishi mumkin." -ForegroundColor DarkGray
 
-docker compose -p java-simple -f docker-compose.prod.yml up -d --build
+docker compose -p java_simple -f docker-compose.prod.yml up -d --build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`nXato: Docker ishlamayapti yoki build failed." -ForegroundColor Red
     Write-Host "  1) Docker Desktop yoqilganligini tekshiring" -ForegroundColor Yellow
@@ -24,7 +24,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "`n[3/3] Konteynerlar holati:" -ForegroundColor Yellow
-docker compose -p java-simple -f docker-compose.prod.yml ps
+docker compose -p java_simple -f docker-compose.prod.yml ps
 
 Write-Host "`nTayyor!" -ForegroundColor Green
 Write-Host "  Frontend: http://localhost:3000"

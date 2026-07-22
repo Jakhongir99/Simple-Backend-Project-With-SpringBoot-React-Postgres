@@ -60,9 +60,10 @@ pipeline {
                     export BACKEND_IMAGE_TAG=${IMAGE_TAG}
                     export FRONTEND_IMAGE_TAG=${IMAGE_TAG}
 
-                    # Bir xil container_name: avvalgi qo'lda/boshqa project stack ni bo'shatamiz
-                    docker compose -p java_simple -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+                    # Eski project nomlarini tozalab, hammasi java_simple ostida
+                    docker compose -p java-simple -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
                     docker compose -p java-simple-pipeline -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+                    docker compose -p java_simple -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
                     docker rm -f \
                       java-simple-postgres-prod \
                       java-simple-redis-prod \
@@ -70,7 +71,7 @@ pipeline {
                       java-simple-frontend-prod \
                       2>/dev/null || true
 
-                    docker compose -p java-simple -f docker-compose.prod.yml up -d --build --remove-orphans
+                    docker compose -p java_simple -f docker-compose.prod.yml up -d --build --remove-orphans
                 '''
             }
         }

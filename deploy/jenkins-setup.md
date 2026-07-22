@@ -2,6 +2,7 @@
 
 Loyiha: push → Jenkins avtomatik test → Docker build → deploy
 
+> Docker Desktop da bitta guruh: **`java_simple`** (app + Jenkins birga).
 > Lokal Jenkins (`localhost:8081`) uchun **Poll SCM** ishlatamiz.
 > GitHub Webhook lokalga to'g'ridan yetib bormaydi (ngrok kerak bo'ladi).
 

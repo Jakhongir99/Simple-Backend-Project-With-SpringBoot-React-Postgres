@@ -1,3 +1,6 @@
+# Docker Desktop guruh nomi (bitta project)
+name: java_simple
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -82,9 +85,16 @@ services:
       - app-network
 
 volumes:
+  # Mavjud DB volume'lari (eski java-simple project dan)
   postgres_prod_data:
+    name: java-simple_postgres_prod_data
+    external: true
   redis_prod_data:
+    name: java-simple_redis_prod_data
+    external: true
   uploads_prod_data:
+    name: java-simple_uploads_prod_data
+    external: true
 
 networks:
   app-network:

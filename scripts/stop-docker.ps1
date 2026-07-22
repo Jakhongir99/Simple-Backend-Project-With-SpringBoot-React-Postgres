@@ -9,7 +9,7 @@ Set-Location $root
 Write-Host "=== Java Simple Docker Stopper ===" -ForegroundColor Cyan
 
 Write-Host "`nDocker Compose toxtatilmoqda..." -ForegroundColor Yellow
-docker compose -p java-simple -f docker-compose.prod.yml down
+docker compose -p java_simple -f docker-compose.prod.yml down
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nTayyor. Barcha prod konteynerlar toxtatildi." -ForegroundColor Green

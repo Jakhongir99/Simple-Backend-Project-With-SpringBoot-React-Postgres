@@ -9,7 +9,7 @@ Set-Location $root
 Write-Host "=== Jenkins Runner ===" -ForegroundColor Cyan
 
 Write-Host "`n[1/2] Jenkins image build + start..." -ForegroundColor Yellow
-docker compose -f docker-compose.jenkins.yml up -d --build
+docker compose -p java_simple -f docker-compose.jenkins.yml up -d --build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`nXato: Docker Desktop yoqilganligini tekshiring." -ForegroundColor Red
     exit 1
