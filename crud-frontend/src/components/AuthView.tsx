@@ -10,6 +10,7 @@ import {
   Group,
   ActionIcon,
   Text,
+  Alert,
 } from "@mantine/core";
 import {
   IconUserPlus,
@@ -21,7 +22,9 @@ import {
   IconBrandGithub,
   IconSun,
   IconMoon,
+  IconAlertCircle,
 } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
 import { useLogin, useRegister } from "../hooks";
 import { useTheme } from "../contexts/ThemeContext";
 import {
@@ -37,6 +40,7 @@ interface AuthViewProps {
 
 export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
   const [activeTab, setActiveTab] = useState<string>("login");
+  const [oauthError, setOauthError] = useState<string | null>(null);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [registerName, setRegisterName] = useState("");
@@ -55,33 +59,45 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
   const registerMutation = useRegister();
 
   // OAuth2 handlers
+  const showOAuthError = (message: string) => {
+    setOauthError(message);
+    onError(message);
+    notifications.show({
+      title: "OAuth",
+      message,
+      color: "red",
+    });
+  };
+
   const handleGoogleLogin = async () => {
+    setOauthError(null);
     try {
       const response = await fetch("/api/auth/oauth2/google/authorize");
       const data = await response.json();
       if (!response.ok || !data.authorizationUrl) {
-        onError(data.message || "Google OAuth sozlanmagan");
+        showOAuthError(data.message || "Google OAuth sozlanmagan");
         return;
       }
       window.location.href = data.authorizationUrl;
     } catch (error) {
       console.error("Error getting Google authorization URL:", error);
-      onError("Failed to initiate Google login");
+      showOAuthError("Failed to initiate Google login");
     }
   };
 
   const handleGitHubLogin = async () => {
+    setOauthError(null);
     try {
       const response = await fetch("/api/auth/oauth2/github/authorize");
       const data = await response.json();
       if (!response.ok || !data.authorizationUrl) {
-        onError(data.message || "GitHub OAuth sozlanmagan");
+        showOAuthError(data.message || "GitHub OAuth sozlanmagan");
         return;
       }
       window.location.href = data.authorizationUrl;
     } catch (error) {
       console.error("Error getting GitHub authorization URL:", error);
-      onError("Failed to initiate GitHub login");
+      showOAuthError("Failed to initiate GitHub login");
     }
   };
 
@@ -322,6 +338,16 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
             <Stack gap="md" align="center">
               <div style={{ textAlign: "center", width: "100%" }}>
                 <p style={styles.oauthText}>Or continue with</p>
+                {oauthError && (
+                  <Alert
+                    icon={<IconAlertCircle size={16} />}
+                    color="red"
+                    mb="sm"
+                    title="OAuth"
+                  >
+                    {oauthError}
+                  </Alert>
+                )}
                 <Stack gap="sm" style={{ width: "100%" }}>
                   <Button
                     variant="outline"

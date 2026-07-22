@@ -266,7 +266,16 @@ function App() {
         <Route
           path="/auth"
           element={
-            <AuthView onSuccess={handleAuthSuccess} onError={(_msg) => {}} />
+            <AuthView
+              onSuccess={handleAuthSuccess}
+              onError={(msg) =>
+                notifications.show({
+                  title: "Auth xato",
+                  message: msg,
+                  color: "red",
+                })
+              }
+            />
           }
         />
       ) : (
