@@ -80,4 +80,22 @@ public class CacheController {
         response.put("message", "File caches cleared successfully");
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/weather")
+    @Operation(summary = "Clear weather caches", description = "Clear weather API caches")
+    public ResponseEntity<Map<String, String>> clearWeatherCaches() {
+        cacheManagementService.clearWeatherCaches();
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Weather caches cleared successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/exchange-rates")
+    @Operation(summary = "Clear exchange rate caches", description = "Clear exchange rate API caches")
+    public ResponseEntity<Map<String, String>> clearExchangeRateCaches() {
+        cacheManagementService.clearExchangeRateCaches();
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Exchange rate caches cleared successfully");
+        return ResponseEntity.ok(response);
+    }
 }

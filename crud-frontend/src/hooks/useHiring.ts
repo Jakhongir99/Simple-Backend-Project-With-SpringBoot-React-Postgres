@@ -37,11 +37,19 @@ export type HiringAction =
 
 const QUERY_KEY = ["hiring-requests"];
 
-export const useHiringRequests = (enabled = true) =>
+interface PageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+}
+
+export const useHiringRequests = (page = 0, size = 10, enabled = true) =>
   useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: async (): Promise<HiringRequestDto[]> => {
-      const res = await api.get("/hiring");
+    queryKey: [...QUERY_KEY, page, size],
+    queryFn: async (): Promise<PageResponse<HiringRequestDto>> => {
+      const res = await api.get("/hiring", { params: { page, size } });
       return res.data;
     },
     enabled: enabled && !!localStorage.getItem("token"),

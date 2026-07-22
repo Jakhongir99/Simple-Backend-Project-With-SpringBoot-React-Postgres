@@ -7,6 +7,10 @@ import com.example.hiring.enums.HiringStatus;
 import com.example.hiring.service.HiringService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,11 +39,22 @@ public class HiringController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
-    /** List all requests, or filter by ?status=SUBMITTED. */
+    /** List requests with optional status filter and pagination. */
     @GetMapping
-    public ResponseEntity<List<HiringRequestDto>> list(
-            @RequestParam(required = false) HiringStatus status) {
-        log.info("GET /api/hiring - status filter: {}", status);
+    public ResponseEntity<?> list(
+            @RequestParam(required = false) HiringStatus status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("GET /api/hiring - status: {}, page: {}, size: {}", status, page, size);
+
+        if (page != null || size != null) {
+            int pageNumber = page != null ? page : 0;
+            int pageSize = size != null ? size : 10;
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<HiringRequestDto> result = hiringService.getAllPaged(status, pageable);
+            return ResponseEntity.ok(result);
+        }
+
         List<HiringRequestDto> result =
                 status != null ? hiringService.getByStatus(status) : hiringService.getAll();
         return ResponseEntity.ok(result);

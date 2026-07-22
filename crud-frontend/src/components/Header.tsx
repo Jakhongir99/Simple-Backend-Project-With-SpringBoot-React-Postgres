@@ -10,6 +10,7 @@ import {
 import { IconSun, IconMoon, IconLanguage } from "@tabler/icons-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslations } from "../hooks/useTranslations";
+import { NotificationBell } from "./NotificationBell";
 
 interface HeaderProps {
   userProfile: any;
@@ -66,6 +67,8 @@ export const Header: React.FC<HeaderProps> = ({
       </Text>
 
       <Group>
+        <NotificationBell />
+
         {/* Language Selector */}
         <Select
           value={currentLanguage}

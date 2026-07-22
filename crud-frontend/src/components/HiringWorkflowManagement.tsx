@@ -7,6 +7,7 @@ import {
   Group,
   Loader,
   Modal,
+  Pagination,
   Paper,
   Stack,
   Table,
@@ -79,7 +80,15 @@ export default function HiringWorkflowManagement() {
   const isHr = myRoles.includes("HR") || myRoles.includes("ADMIN");
   const isDirector = myRoles.includes("DIRECTOR") || myRoles.includes("ADMIN");
 
-  const { data: requests, isLoading } = useHiringRequests();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  const { data: requestsPage, isLoading } = useHiringRequests(
+    currentPage - 1,
+    pageSize
+  );
+  const requests = requestsPage?.content ?? [];
+  const totalPages = requestsPage?.totalPages ?? 1;
   const submitMutation = useSubmitHiring();
   const decisionMutation = useHiringDecision();
 
@@ -383,6 +392,15 @@ export default function HiringWorkflowManagement() {
               ))}
             </Table.Tbody>
           </Table>
+        )}
+        {totalPages > 1 && (
+          <Group justify="center" mt="md">
+            <Pagination
+              total={totalPages}
+              value={currentPage}
+              onChange={setCurrentPage}
+            />
+          </Group>
         )}
       </Paper>
 

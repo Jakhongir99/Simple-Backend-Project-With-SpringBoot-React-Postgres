@@ -8,6 +8,8 @@ import {
   IconShield,
   IconUserCheck,
   IconSitemap,
+  IconCloud,
+  IconArrowsExchange,
 } from "@tabler/icons-react";
 import { useTranslations } from "../hooks/useTranslations";
 
@@ -162,6 +164,32 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
             style={getButtonStyles(currentPage === "processes")}
           >
             {t("nav.processes", "Jarayonlar")}
+          </Button>
+
+          <Button
+            variant={currentPage === "weather" ? "filled" : "light"}
+            leftSection={<IconCloud size={16} />}
+            justify="flex-start"
+            fullWidth
+            size="md"
+            radius="xl"
+            onClick={() => onNavigate?.("weather")}
+            style={getButtonStyles(currentPage === "weather")}
+          >
+            Ob-havo
+          </Button>
+
+          <Button
+            variant={currentPage === "exchange" ? "filled" : "light"}
+            leftSection={<IconArrowsExchange size={16} />}
+            justify="flex-start"
+            fullWidth
+            size="md"
+            radius="xl"
+            onClick={() => onNavigate?.("exchange")}
+            style={getButtonStyles(currentPage === "exchange")}
+          >
+            Valyuta kursi
           </Button>
 
           <Button

@@ -58,6 +58,7 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/api/files/recent").permitAll()
                 // Swagger UI endpoints
                 .antMatchers("/swagger-ui/**", "/swagger-ui.html", "/v2/api-docs", "/swagger-resources/**", "/webjars/**", "/v3/api-docs/**").permitAll()
+                .antMatchers("/actuator/health", "/actuator/info").permitAll()
                 // Static resources and error pages
                 .antMatchers("/", "/error", "/favicon.ico").permitAll()
                 .anyRequest().authenticated()

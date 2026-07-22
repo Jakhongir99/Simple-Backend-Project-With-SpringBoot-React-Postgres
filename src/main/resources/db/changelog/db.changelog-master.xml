@@ -13,5 +13,8 @@
     <include file="db/changelog/changes/009-create-files-table.xml"/>
     <include file="db/changelog/changes/010-add-oauth2-fields.xml"/>
     <include file="db/changelog/changes/011-create-roles-table.xml"/>
+    <include file="db/changelog/changes/012-create-hiring-requests-table.xml"/>
+    <include file="db/changelog/changes/013-create-workflow-processes-table.xml"/>
+    <include file="db/changelog/changes/014-create-notifications-table.xml"/>
 
 </databaseChangeLog>

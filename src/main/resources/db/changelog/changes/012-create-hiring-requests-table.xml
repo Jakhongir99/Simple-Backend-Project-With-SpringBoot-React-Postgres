@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="012-create-hiring-requests-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="hiring_requests"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="hiring_requests">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="candidate_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="candidate_email" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="department" type="varchar(100)"/>
+            <column name="status" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="submitted_by" type="varchar(100)"/>
+            <column name="hr_comment" type="varchar(500)"/>
+            <column name="hr_decided_by" type="varchar(100)"/>
+            <column name="hr_decided_at" type="timestamp"/>
+            <column name="director_comment" type="varchar(500)"/>
+            <column name="director_decided_by" type="varchar(100)"/>
+            <column name="director_decided_at" type="timestamp"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="hiring_requests" indexName="idx_hiring_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="hiring_requests" indexName="idx_hiring_created_at">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

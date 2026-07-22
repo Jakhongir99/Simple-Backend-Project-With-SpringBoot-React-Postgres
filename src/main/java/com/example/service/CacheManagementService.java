@@ -82,4 +82,12 @@ public class CacheManagementService {
         clearCache("fileStats");
         clearCache("fileExists");
     }
+
+    public void clearWeatherCaches() {
+        clearCache("weather");
+    }
+
+    public void clearExchangeRateCaches() {
+        clearCache("exchangeRates");
+    }
 }

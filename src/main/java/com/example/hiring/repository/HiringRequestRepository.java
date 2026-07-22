@@ -2,6 +2,8 @@ package com.example.hiring.repository;
 
 import com.example.hiring.entity.HiringRequest;
 import com.example.hiring.enums.HiringStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +14,11 @@ public interface HiringRequestRepository extends JpaRepository<HiringRequest, Lo
 
     List<HiringRequest> findAllByOrderByCreatedAtDesc();
 
+    Page<HiringRequest> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
     List<HiringRequest> findByStatusOrderByCreatedAtDesc(HiringStatus status);
+
+    Page<HiringRequest> findByStatusOrderByCreatedAtDesc(HiringStatus status, Pageable pageable);
 
     long countByStatus(HiringStatus status);
 }

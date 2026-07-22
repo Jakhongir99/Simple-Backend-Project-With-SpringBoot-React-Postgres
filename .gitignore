@@ -44,6 +44,11 @@ replay_pid*
 # Uploaded user files
 uploads/
 
+# Local secrets (OAuth keys, etc.)
+src/main/resources/application-local.properties
+.env.prod
+.env
+
 # Node
 crud-frontend/node_modules/
 crud-frontend/dist/

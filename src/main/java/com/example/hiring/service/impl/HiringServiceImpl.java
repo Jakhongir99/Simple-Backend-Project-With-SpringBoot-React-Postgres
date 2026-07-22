@@ -8,8 +8,11 @@ import com.example.hiring.enums.HiringStatus;
 import com.example.hiring.mapper.HiringMapper;
 import com.example.hiring.repository.HiringRequestRepository;
 import com.example.hiring.service.HiringService;
+import com.example.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ public class HiringServiceImpl implements HiringService {
 
     private final HiringRequestRepository hiringRequestRepository;
     private final HiringMapper hiringMapper;
+    private final NotificationService notificationService;
 
     @Override
     public HiringRequestDto submit(CreateHiringRequest request, String submittedBy) {
@@ -46,6 +50,15 @@ public class HiringServiceImpl implements HiringService {
                 .stream()
                 .map(hiringMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HiringRequestDto> getAllPaged(HiringStatus status, Pageable pageable) {
+        Page<HiringRequest> page = status != null
+                ? hiringRequestRepository.findByStatusOrderByCreatedAtDesc(status, pageable)
+                : hiringRequestRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return page.map(hiringMapper::toDto);
     }
 
     @Override
@@ -74,7 +87,11 @@ public class HiringServiceImpl implements HiringService {
         entity.setHrDecidedAt(LocalDateTime.now());
 
         log.info("Hiring request {} approved by HR: {}", id, decidedBy);
-        return hiringMapper.toDto(hiringRequestRepository.save(entity));
+        HiringRequest saved = hiringRequestRepository.save(entity);
+        notificationService.notifyHiringDecision(saved,
+                "HR tasdiqladi",
+                "Ariza #" + saved.getId() + " (" + saved.getCandidateName() + ") HR tomonidan tasdiqlandi.");
+        return hiringMapper.toDto(saved);
     }
 
     @Override
@@ -88,7 +105,12 @@ public class HiringServiceImpl implements HiringService {
         entity.setHrDecidedAt(LocalDateTime.now());
 
         log.info("Hiring request {} rejected by HR: {}", id, decidedBy);
-        return hiringMapper.toDto(hiringRequestRepository.save(entity));
+        HiringRequest saved = hiringRequestRepository.save(entity);
+        notificationService.notifyHiringDecision(saved,
+                "HR rad etdi",
+                "Ariza #" + saved.getId() + " HR tomonidan rad etildi."
+                        + (saved.getHrComment() != null ? " Izoh: " + saved.getHrComment() : ""));
+        return hiringMapper.toDto(saved);
     }
 
     @Override
@@ -102,7 +124,11 @@ public class HiringServiceImpl implements HiringService {
         entity.setDirectorDecidedAt(LocalDateTime.now());
 
         log.info("Hiring request {} approved by Director: {} -> HIRED", id, decidedBy);
-        return hiringMapper.toDto(hiringRequestRepository.save(entity));
+        HiringRequest saved = hiringRequestRepository.save(entity);
+        notificationService.notifyHiringDecision(saved,
+                "Ishga olindi!",
+                "Tabriklaymiz! " + saved.getCandidateName() + " ishga olish jarayoni muvaffaqiyatli yakunlandi.");
+        return hiringMapper.toDto(saved);
     }
 
     @Override
@@ -116,7 +142,12 @@ public class HiringServiceImpl implements HiringService {
         entity.setDirectorDecidedAt(LocalDateTime.now());
 
         log.info("Hiring request {} rejected by Director: {}", id, decidedBy);
-        return hiringMapper.toDto(hiringRequestRepository.save(entity));
+        HiringRequest saved = hiringRequestRepository.save(entity);
+        notificationService.notifyHiringDecision(saved,
+                "Director rad etdi",
+                "Ariza #" + saved.getId() + " Director tomonidan rad etildi."
+                        + (saved.getDirectorComment() != null ? " Izoh: " + saved.getDirectorComment() : ""));
+        return hiringMapper.toDto(saved);
     }
 
     // --- helpers ---

@@ -4,6 +4,8 @@ import com.example.hiring.dto.CreateHiringRequest;
 import com.example.hiring.dto.HiringDecisionRequest;
 import com.example.hiring.dto.HiringRequestDto;
 import com.example.hiring.enums.HiringStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -14,6 +16,9 @@ public interface HiringService {
 
     /** All requests, newest first. */
     List<HiringRequestDto> getAll();
+
+    /** Paginated list, optionally filtered by status. */
+    Page<HiringRequestDto> getAllPaged(HiringStatus status, Pageable pageable);
 
     /** Requests filtered by status. */
     List<HiringRequestDto> getByStatus(HiringStatus status);

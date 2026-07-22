@@ -10,6 +10,8 @@ import { Dashboard } from "./components/Dashboard";
 import RoleManagement from "./components/RoleManagement";
 import HiringWorkflowManagement from "./components/HiringWorkflowManagement";
 import ProcessManagement from "./components/ProcessManagement";
+import WeatherView from "./components/WeatherView";
+import ExchangeRateView from "./components/ExchangeRateView";
 
 import TranslationManagement from "./components/TranslationManagement";
 import FileManagement from "./components/FileManagement";
@@ -427,6 +429,46 @@ function App() {
                 setUserProfile={setUserProfile}
               >
                 <ProcessManagement />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/weather"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="weather"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <WeatherView />
+              </Layout>
+            }
+          />
+
+          <Route
+            path="/exchange"
+            element={
+              <Layout
+                opened={opened}
+                setOpened={setOpened}
+                userProfile={userProfile}
+                onProfileClick={() => setProfileModalOpened(true)}
+                onLogout={logout}
+                onNavigate={handleNavigate}
+                currentPage="exchange"
+                profileModalOpened={profileModalOpened}
+                setProfileModalOpened={setProfileModalOpened}
+                setUserProfile={setUserProfile}
+              >
+                <ExchangeRateView />
               </Layout>
             }
           />

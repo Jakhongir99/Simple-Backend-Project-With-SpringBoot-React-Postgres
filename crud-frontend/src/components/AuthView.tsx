@@ -59,6 +59,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
     try {
       const response = await fetch("/api/auth/oauth2/google/authorize");
       const data = await response.json();
+      if (!response.ok || !data.authorizationUrl) {
+        onError(data.message || "Google OAuth sozlanmagan");
+        return;
+      }
       window.location.href = data.authorizationUrl;
     } catch (error) {
       console.error("Error getting Google authorization URL:", error);
@@ -70,6 +74,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess, onError }) => {
     try {
       const response = await fetch("/api/auth/oauth2/github/authorize");
       const data = await response.json();
+      if (!response.ok || !data.authorizationUrl) {
+        onError(data.message || "GitHub OAuth sozlanmagan");
+        return;
+      }
       window.location.href = data.authorizationUrl;
     } catch (error) {
       console.error("Error getting GitHub authorization URL:", error);
