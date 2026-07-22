@@ -56,9 +56,21 @@ pipeline {
             steps {
                 echo 'docker-compose.prod.yml orqali deploy...'
                 sh '''
+                    set -e
                     export BACKEND_IMAGE_TAG=${IMAGE_TAG}
                     export FRONTEND_IMAGE_TAG=${IMAGE_TAG}
-                    docker compose -f docker-compose.prod.yml up -d --build
+
+                    # Bir xil container_name: avvalgi qo'lda/boshqa project stack ni bo'shatamiz
+                    docker compose -p java_simple -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+                    docker compose -p java-simple-pipeline -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+                    docker rm -f \
+                      java-simple-postgres-prod \
+                      java-simple-redis-prod \
+                      java-simple-backend-prod \
+                      java-simple-frontend-prod \
+                      2>/dev/null || true
+
+                    docker compose -p java-simple -f docker-compose.prod.yml up -d --build --remove-orphans
                 '''
             }
         }

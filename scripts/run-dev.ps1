@@ -1,9 +1,10 @@
 # Local dev runner: start backend + frontend as detached processes
 # Closing this terminal will NOT stop the apps.
-# Usage: .\run-dev.ps1
+# Usage: .\scripts\run-dev.ps1
 
 $ErrorActionPreference = "Continue"
-$root = $PSScriptRoot
+$scriptsDir = $PSScriptRoot
+$root = Split-Path -Parent $scriptsDir
 $logDir = Join-Path $root "logs"
 $pidFile = Join-Path $logDir "dev.pids"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
@@ -48,7 +49,7 @@ function Wait-Port {
 
 # Stop old instances first
 Write-Host "`n[0/4] Eski jarayonlar tozalanmoqda..." -ForegroundColor Yellow
-& (Join-Path $root "stop-dev.ps1") | Out-Null
+& (Join-Path $scriptsDir "stop-dev.ps1") | Out-Null
 Start-Sleep -Seconds 2
 
 $frontendDir = Join-Path $root "crud-frontend"
@@ -115,4 +116,4 @@ if ($backendOk -and $frontendOk) {
     }
 }
 
-Write-Host "`nTo'xtatish: .\stop-dev.ps1" -ForegroundColor DarkGray
+Write-Host "`nTo'xtatish: .\scripts\stop-dev.ps1" -ForegroundColor DarkGray

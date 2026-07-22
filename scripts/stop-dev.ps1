@@ -1,8 +1,9 @@
 # Stop backend (8080) and frontend (3000)
-# Usage: .\stop-dev.ps1
+# Usage: .\scripts\stop-dev.ps1
 
 $ErrorActionPreference = "Continue"
-$root = $PSScriptRoot
+$scriptsDir = $PSScriptRoot
+$root = Split-Path -Parent $scriptsDir
 $pidFile = Join-Path $root "logs\dev.pids"
 
 Write-Host "=== Java Simple Dev Stopper ===" -ForegroundColor Cyan
@@ -98,4 +99,4 @@ Stop-ByName -ProcessName "java" -MatchCommand "java-simple" -Label "Java app"
 Stop-ByName -ProcessName "node" -MatchCommand "vite" -Label "Vite"
 
 Write-Host "`nTayyor. Backend va frontend to'xtatildi." -ForegroundColor Green
-Write-Host "Qayta ishga tushirish: .\run-dev.ps1" -ForegroundColor DarkGray
+Write-Host "Qayta ishga tushirish: .\scripts\run-dev.ps1" -ForegroundColor DarkGray

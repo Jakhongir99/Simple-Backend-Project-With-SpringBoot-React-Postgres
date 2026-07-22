@@ -1,5 +1,5 @@
 # Jenkins + Docker CI/CD stack
-# Start: .\run-jenkins.ps1
+# Start: .\scripts\run-jenkins.ps1
 # UI: http://localhost:8081
 
 services:

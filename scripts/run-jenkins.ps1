@@ -1,8 +1,9 @@
 # Jenkins Docker runner
-# Usage: .\run-jenkins.ps1
+# Usage: .\scripts\run-jenkins.ps1
 
 $ErrorActionPreference = "Continue"
-$root = $PSScriptRoot
+$scriptsDir = $PSScriptRoot
+$root = Split-Path -Parent $scriptsDir
 Set-Location $root
 
 Write-Host "=== Jenkins Runner ===" -ForegroundColor Cyan
@@ -47,5 +48,5 @@ if ($password) {
     Write-Host '  docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword'
 }
 
-Write-Host "`nToxtatish: .\stop-jenkins.ps1" -ForegroundColor DarkGray
+Write-Host "`nToxtatish: .\scripts\stop-jenkins.ps1" -ForegroundColor DarkGray
 try { Start-Process "http://localhost:8081" } catch { }

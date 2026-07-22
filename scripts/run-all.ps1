@@ -5,10 +5,11 @@
 # NOTE: Local run-dev (Vite/Java on host) is NOT started here —
 # it uses the same ports 3000/8080 and would conflict.
 #
-# Usage: .\run-all.ps1
+# Usage: .\scripts\run-all.ps1
 
 $ErrorActionPreference = "Continue"
-$root = $PSScriptRoot
+$scriptsDir = $PSScriptRoot
+$root = Split-Path -Parent $scriptsDir
 Set-Location $root
 
 Write-Host "=== Java Simple ALL Runner ===" -ForegroundColor Cyan
@@ -20,10 +21,10 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host "`n[1/4] Lokal run-dev tozalanmoqda (portlar bo'shashi uchun)..." -ForegroundColor Yellow
-& (Join-Path $root "stop-dev.ps1") | Out-Null
+& (Join-Path $scriptsDir "stop-dev.ps1") | Out-Null
 
 Write-Host "`n[2/4] Docker App (prod) ishga tushirilmoqda..." -ForegroundColor Yellow
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -p java-simple -f docker-compose.prod.yml up -d --build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Docker App start failed." -ForegroundColor Red
     exit 1
@@ -37,7 +38,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "`n[4/4] Holat:" -ForegroundColor Yellow
-docker compose -f docker-compose.prod.yml ps
+docker compose -p java-simple -f docker-compose.prod.yml ps
 docker compose -f docker-compose.jenkins.yml ps
 
 Write-Host "`nTayyor!" -ForegroundColor Green
@@ -49,8 +50,8 @@ Write-Host "  Jenkins:   http://localhost:8081"
 Write-Host "`nJenkins parol:" -ForegroundColor Cyan
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword 2>$null
 Write-Host ""
-Write-Host "Toxtatish: .\stop-all.ps1" -ForegroundColor DarkGray
-Write-Host "Faqat kod yozish (local): .\run-dev.ps1" -ForegroundColor DarkGray
+Write-Host "Toxtatish: .\scripts\stop-all.ps1" -ForegroundColor DarkGray
+Write-Host "Faqat kod yozish (local): .\scripts\run-dev.ps1" -ForegroundColor DarkGray
 
 try { Start-Process "http://localhost:3000" } catch { }
 try { Start-Process "http://localhost:8081" } catch { }

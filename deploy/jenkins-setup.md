@@ -10,7 +10,7 @@ Loyiha: push → Jenkins avtomatik test → Docker build → deploy
 ## QISM 0 — Jenkins ishlayaptimi?
 
 ```powershell
-.\run-jenkins.ps1
+.\scripts\run-jenkins.ps1
 ```
 
 - UI: http://localhost:8081
@@ -18,7 +18,7 @@ Loyiha: push → Jenkins avtomatik test → Docker build → deploy
   `docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword`
 
 **Muhim:** eski Jenkins image'da `docker` yo'q edi (exit 127).
-`run-jenkins.ps1` endi Docker CLI bilan **qayta build** qiladi.
+`scripts/run-jenkins.ps1` endi Docker CLI bilan **qayta build** qiladi.
 
 ---
 
@@ -115,13 +115,13 @@ Brauzerda localhost:3000 / 8080
 To'xtatish:
 
 ```powershell
-.\stop-all.ps1
+.\scripts\stop-all.ps1
 ```
 
 Hammasi (App + Jenkins):
 
 ```powershell
-.\run-all.ps1
+.\scripts\run-all.ps1
 ```
 
 ---
@@ -131,9 +131,10 @@ Hammasi (App + Jenkins):
 | Xato | Yechim |
 |------|--------|
 | `couldn't find remote ref master` | Branch = `*/main` |
-| `exit code 127` / docker not found | `.\run-jenkins.ps1` (rebuild) |
+| `exit code 127` / docker not found | `.\scripts\run-jenkins.ps1` (rebuild) |
 | Build umuman boshlanmaydi | Poll SCM + `H/2 * * * *` belgilanganmi? |
-| Port band | `.\stop-dev.ps1` — local va Docker birga emas |
+| Port band | `.\scripts\stop-dev.ps1` — local va Docker birga emas |
+| `container name ... already in use` | Eski stack qolgan. `.\scripts\stop-docker.ps1` yoki Build Now (yangi Jenkinsfile avval tozalaydi) |
 
 ---
 
